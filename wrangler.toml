@@ -5,6 +5,5 @@ pages_build_output_dir = "dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "planner-db"
-# `npx wrangler d1 create planner-db` 실행 후 나온 ID로 교체하세요.
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "8c57a1af-9ee4-4dd7-b262-772099ac0af3"
 migrations_dir = "migrations"
