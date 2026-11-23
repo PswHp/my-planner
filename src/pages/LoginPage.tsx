@@ -1,4 +1,7 @@
+import { Link } from 'react-router'
+
 const ERRORS: Record<string, string> = {
+  cancelled: '로그인이 취소되었습니다.',
   not_allowed: '이 구글 계정은 접근이 허용되지 않았습니다.',
   unverified: '이메일 인증이 완료된 구글 계정만 사용할 수 있습니다.',
   state: '로그인 요청이 만료되었습니다. 다시 시도해 주세요.',
@@ -30,6 +33,17 @@ export default function LoginPage() {
           </svg>
           Google로 로그인
         </a>
+        <p className="mt-5 text-xs leading-relaxed text-stone-500">
+          로그인하면{' '}
+          <Link to="/terms" className="underline">
+            이용약관
+          </Link>
+          과{' '}
+          <Link to="/privacy" className="underline">
+            개인정보처리방침
+          </Link>
+          에 동의하는 것으로 간주됩니다.
+        </p>
       </div>
     </div>
   )

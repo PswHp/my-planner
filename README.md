@@ -1,87 +1,77 @@
 # 플래너
 
-개인 일정 관리 사이트 — 캘린더 · 할 일 · 타임 블록 · 통계
+캘린더 · 할 일 · 타임 블록 · 통계를 한 곳에서 관리하는 일정 관리 웹 서비스.
+Google 계정으로 로그인하면 누구나 사용할 수 있으며, 데이터는 사용자별로 분리됩니다.
 
-**스택**: React 19 + Vite + TypeScript + Tailwind CSS v4 / Cloudflare Pages Functions + D1 / Google 로그인
+**스택**: React 19 + Vite + TypeScript + Tailwind CSS v4 / Cloudflare Pages Functions + D1 / Google OAuth
+
+## 기능
+
+- **캘린더**: 월간 보기, 종일·여러 날 일정, 색상, 마감 할 일 표시
+- **할 일**: 빠른 추가, 마감일·우선순위, 기한별 그룹, 필터
+- **타임 블록**: 드래그로 시간 블록 생성(15분 단위), 카테고리, 할 일 연결, 겹침 배치
+- **통계**: 기간별 완료 수, 마감 달성률, 계획 시간, 카테고리별 시간
+- **계정**: 데이터 내보내기(JSON), 회원 탈퇴(즉시 전체 삭제)
 
 ## 구조
 
 ```
 src/                      프론트엔드 (React)
-  pages/                  CalendarPage, TasksPage, TimeBlocksPage, StatsPage, LoginPage
-  components/             Layout, Modal, ColorPicker, Icons
-  lib/api.ts              API 클라이언트 + 타입
+  pages/                  화면별 컴포넌트 (+ 개인정보처리방침/약관)
+  lib/site.ts             운영자 정보 (방침/약관에 표시)
 functions/                Cloudflare Pages Functions (= /api/*)
-  api/_middleware.ts      로그인 확인 + 에러 처리
-  api/auth/               login, callback, logout (Google OAuth)
-  api/events, tasks, blocks   CRUD
-  api/stats.ts            통계 집계
+  api/_middleware.ts      Origin 검사(CSRF) + 로그인 확인 + 보안 헤더
+  api/auth/               Google OAuth (PKCE)
+  api/events, tasks, blocks, stats, me, export
   _lib/                   공통 코드 (검증, CRUD, 세션)
 migrations/               D1 스키마
+public/_headers           정적 파일 보안 헤더 (CSP 등)
 ```
 
-날짜·시간은 사용자 로컬 기준 문자열(`YYYY-MM-DD`, `YYYY-MM-DDTHH:mm`)로 저장합니다. 그래서 시간대 변환 문제가 생기지 않습니다.
+날짜·시간은 사용자 로컬 기준 문자열(`YYYY-MM-DD`, `YYYY-MM-DDTHH:mm`)로 저장합니다.
 
----
+## 로컬 개발
 
-## 1. Google OAuth 클라이언트 만들기
+1. Google Cloud Console에서 OAuth 클라이언트(웹 애플리케이션)를 만들고, 리디렉션 URI에
+   `http://localhost:5173/api/auth/callback`을 추가합니다.
+2. 설정:
 
-1. <https://console.cloud.google.com/apis/credentials>에서 프로젝트를 만들거나 선택합니다.
-2. **OAuth 동의 화면**: 외부(External)를 선택하고 앱 이름을 입력합니다. 테스트 사용자에 본인 이메일을 추가합니다.
-3. **사용자 인증 정보 만들기 → OAuth 클라이언트 ID → 웹 애플리케이션**을 선택합니다.
-4. **승인된 리디렉션 URI**에 아래 주소를 추가합니다.
-   - `http://localhost:5173/api/auth/callback` (로컬)
-   - `https://<프로젝트명>.pages.dev/api/auth/callback` (배포)
-   - 커스텀 도메인을 쓴다면 `https://<도메인>/api/auth/callback`도 추가합니다.
-5. 발급된 **클라이언트 ID**와 **클라이언트 보안 비밀번호**를 저장해 둡니다.
+   ```bash
+   npm install
+   cp .dev.vars.example .dev.vars        # GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET 입력
+   npm run db:migrate:local
+   npm run build                         # 최초 1회 (wrangler가 dist 필요)
+   ```
 
-## 2. 로컬 개발
+3. 터미널 두 개에서 실행:
 
-```bash
-npm install
-cp .dev.vars.example .dev.vars        # 열어서 GOOGLE_CLIENT_ID / SECRET / ALLOWED_EMAILS 입력
-npm run db:migrate:local              # 로컬 D1에 테이블 생성
-npm run build                         # wrangler가 dist 폴더를 필요로 해서 최초 1회 실행
-```
+   ```bash
+   npm run dev:api    # wrangler: API + 로컬 D1 (localhost:8788)
+   npm run dev        # vite: 프론트 (localhost:5173), /api는 8788로 프록시
+   ```
 
-터미널 두 개를 엽니다.
+## 배포 (Cloudflare Pages)
 
-```bash
-npm run dev:api    # wrangler: API + 로컬 D1 (localhost:8788)
-npm run dev        # vite: 프론트 (localhost:5173), /api 요청은 8788로 프록시
-```
+`main` 브랜치에 push하면 Cloudflare Pages가 자동으로 빌드·배포합니다.
 
-<http://localhost:5173>에 접속해서 Google로 로그인합니다.
+- Build command: `npm run build` / Output: `dist`
+- D1 바인딩 `DB`는 `wrangler.toml`에서 적용
+- 환경 변수(Secrets): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+  - 선택: `ALLOWED_EMAILS` (쉼표 구분) — 설정하면 해당 이메일만 로그인 허용
+- 스키마 변경: `migrations/000N_xxx.sql` 추가 후 `npm run db:migrate:remote`
 
-## 3. Cloudflare 배포 (GitHub 연동)
+## 보안
 
-```bash
-npx wrangler login
-npx wrangler d1 create planner-db     # 출력된 database_id를 wrangler.toml에 붙여넣기
-npm run db:migrate:remote             # 원격 D1에 테이블 생성
-```
-
-1. 이 저장소를 GitHub에 push합니다.
-2. Cloudflare 대시보드에서 **Workers & Pages → Create → Pages → Connect to Git**으로 저장소를 선택합니다.
-   - Build command: `npm run build`
-   - Build output directory: `dist`
-3. D1 바인딩(`DB`)은 `wrangler.toml`에서 자동으로 적용됩니다.
-4. **Settings → Variables and Secrets**에 아래 값을 추가합니다. 비밀값은 *Encrypt*로 설정합니다.
-   - `GOOGLE_CLIENT_ID`
-   - `GOOGLE_CLIENT_SECRET` (Encrypt)
-   - `ALLOWED_EMAILS`: 로그인을 허용할 이메일입니다. 쉼표로 구분하고, **꼭 설정하세요.** 비워 두면 모든 구글 계정이 가입할 수 있습니다. 데이터는 계정별로 분리됩니다.
-   - `APP_URL`은 배포 환경에서는 설정하지 않습니다.
-5. 다시 배포하면 이후로는 `main`에 push할 때마다 자동으로 배포됩니다.
-
-스키마를 바꿀 때는 `migrations/0002_xxx.sql`을 추가하고 `npm run db:migrate:remote`를 실행합니다.
+[SECURITY.md](SECURITY.md) 참고. 취약점은 공개 이슈 대신 Security 탭의 비공개 신고를 이용해 주세요.
 
 ## API
 
-모든 `/api/*` 요청은 세션 쿠키(`sid`)가 필요합니다. 단, `/api/auth/*`는 예외입니다.
+`/api/auth/*`를 제외한 모든 요청은 세션 쿠키가 필요하며, 상태 변경 요청은 같은 출처(Origin)에서만 허용됩니다.
 
 | Method | Path | 설명 |
 |---|---|---|
-| GET | `/api/me` | 로그인 사용자 |
+| GET / DELETE | `/api/me` | 로그인 사용자 / 회원 탈퇴 (`{"confirm": "<이메일>"}`) |
+| GET | `/api/export` | 내 데이터 전체 JSON |
 | GET/POST | `/api/events?from&to` | 기간과 겹치는 일정 / 생성 |
 | PATCH/DELETE | `/api/events/:id` | 수정 / 삭제 |
 | GET/POST | `/api/tasks` | 전체 할 일 / 생성 |

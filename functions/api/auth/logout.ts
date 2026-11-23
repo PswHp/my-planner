@@ -1,16 +1,12 @@
-import { isSecure, SESSION_COOKIE, sha256 } from '../../_lib/auth'
+import { cookieName, isSecure, sha256 } from '../../_lib/auth'
 import type { Handler } from '../../_lib/env'
 import { getCookie, json, setCookie } from '../../_lib/http'
 
+/** POST /api/auth/logout (Origin 검사는 미들웨어에서 수행) */
 export const onRequestPost: Handler = async ({ env, request }) => {
-  const token = getCookie(request, SESSION_COOKIE)
+  const secure = isSecure(env, request)
+  const name = cookieName('sid', secure)
+  const token = getCookie(request, name)
   if (token) await env.DB.prepare('DELETE FROM sessions WHERE id = ?').bind(await sha256(token)).run()
-  return new Response(JSON.stringify({ ok: true }), {
-    headers: {
-      'content-type': 'application/json',
-      'set-cookie': setCookie(SESSION_COOKIE, '', { maxAge: 0, secure: isSecure(env, request) }),
-    },
-  })
+  return json({ ok: true }, 200, { 'set-cookie': setCookie(name, '', { maxAge: 0, secure }) })
 }
-
-export const onRequestGet: Handler = async () => json({ error: 'POST로 요청하세요.' }, 405)

@@ -7,20 +7,25 @@ export class HttpError extends Error {
   }
 }
 
-export function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
-  })
+export function json(data: unknown, status = 200, extraHeaders: HeadersInit = {}): Response {
+  const headers = new Headers(extraHeaders)
+  headers.set('content-type', 'application/json; charset=utf-8')
+  return new Response(JSON.stringify(data), { status, headers })
 }
 
 export function error(status: number, message: string): Response {
   return json({ error: message }, status)
 }
 
+const MAX_BODY_BYTES = 32 * 1024
+
 export async function readJson(request: Request): Promise<Record<string, unknown>> {
+  const declared = Number(request.headers.get('content-length') ?? 0)
+  if (declared > MAX_BODY_BYTES) throw new HttpError(413, '요청 본문이 너무 큽니다.')
+  const text = await request.text()
+  if (text.length > MAX_BODY_BYTES) throw new HttpError(413, '요청 본문이 너무 큽니다.')
   try {
-    const body = await request.json()
+    const body = JSON.parse(text)
     if (body && typeof body === 'object' && !Array.isArray(body)) return body as Record<string, unknown>
   } catch {
     /* fallthrough */

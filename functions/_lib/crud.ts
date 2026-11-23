@@ -53,6 +53,8 @@ export interface Resource {
   table: string
   fields: Record<string, Field>
   required: string[]
+  /** 사용자 1명이 만들 수 있는 최대 행 수 (DB 남용 방지) */
+  maxRows: number
 }
 
 /** body에서 허용된 필드만 검증해서 꺼냄 */
@@ -67,6 +69,12 @@ export function pick(res: Resource, body: Record<string, unknown>, partial: bool
 }
 
 export async function insertRow(db: D1Database, res: Resource, userId: string, values: Record<string, DbValue>) {
+  const count = await db
+    .prepare(`SELECT COUNT(*) AS n FROM ${res.table} WHERE user_id = ?`)
+    .bind(userId)
+    .first<number>('n')
+  if ((count ?? 0) >= res.maxRows)
+    throw new HttpError(429, `저장 가능한 최대 개수(${res.maxRows.toLocaleString()}개)에 도달했습니다. 오래된 항목을 정리해 주세요.`)
   const row: Record<string, DbValue> = { id: crypto.randomUUID(), user_id: userId, ...values }
   const cols = Object.keys(row)
   await db

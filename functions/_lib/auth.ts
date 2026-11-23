@@ -1,8 +1,13 @@
 import type { Env, User } from './env'
 
-export const SESSION_COOKIE = 'sid'
-export const STATE_COOKIE = 'oauth_state'
 export const SESSION_DAYS = 30
+
+/**
+ * HTTPS에서는 `__Host-` 접두사 쿠키를 사용한다.
+ * (Secure + Path=/ + Domain 없음이 강제되어 하위 도메인/HTTP에서 덮어쓰기 불가)
+ * 로컬 http://localhost 에서는 접두사를 쓸 수 없으므로 일반 이름을 사용.
+ */
+export const cookieName = (base: 'sid' | 'oauth', secure: boolean) => (secure ? `__Host-${base}` : base)
 
 export function randomToken(bytes = 32): string {
   const buf = crypto.getRandomValues(new Uint8Array(bytes))
@@ -12,6 +17,15 @@ export function randomToken(bytes = 32): string {
 export async function sha256(input: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input))
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+/** PKCE S256 code_challenge = base64url(sha256(verifier)) */
+export async function pkceChallenge(verifier: string): Promise<string> {
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)))
+  return btoa(String.fromCharCode(...digest))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
 }
 
 /** 브라우저가 보는 사이트 주소. 로컬에서는 Vite 프록시 뒤에 있으므로 APP_URL로 지정 */
@@ -24,7 +38,7 @@ export function isSecure(env: Env, request: Request): boolean {
 }
 
 export async function userFromSession(env: Env, token: string | null): Promise<User | null> {
-  if (!token) return null
+  if (!token || token.length > 128) return null
   const row = await env.DB.prepare(
     `SELECT u.id, u.email, u.name, u.picture, s.expires_at
        FROM sessions s JOIN users u ON u.id = s.user_id

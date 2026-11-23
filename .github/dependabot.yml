@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # 마이너/패치 업데이트는 PR 하나로 묶기
+      minor-and-patch:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5

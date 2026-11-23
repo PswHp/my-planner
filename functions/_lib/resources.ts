@@ -15,6 +15,7 @@ export const eventResource: Resource = {
     color: f.oneOf(COLORS),
   },
   required: ['title', 'start_at', 'end_at'],
+  maxRows: 10_000,
 }
 
 export const taskResource: Resource = {
@@ -29,6 +30,7 @@ export const taskResource: Resource = {
     created_at: f.datetime(),
   },
   required: ['title', 'created_at'],
+  maxRows: 10_000,
 }
 
 export const blockResource: Resource = {
@@ -42,6 +44,7 @@ export const blockResource: Resource = {
     task_id: f.nullableId(),
   },
   required: ['date', 'start_min', 'end_min', 'title'],
+  maxRows: 20_000,
 }
 
 /** 시작/종료 값(문자열 또는 분)이 올바른 순서인지 확인 */
