@@ -10,7 +10,6 @@ import {
   ClipboardIcon,
   HeartIcon,
   InfoIcon,
-  MinusIcon,
   PencilIcon,
   PlusIcon,
   ShirtIcon,
@@ -159,8 +158,6 @@ export default function DashboardPage({ user }: { user: User }) {
           today={today}
           tasks={dayTasks}
           onToggle={toggleTask}
-          onAdded={load}
-          onError={setError}
         />
 
         <MiniCalendar
@@ -351,41 +348,15 @@ function TodayTasks({
   today,
   tasks,
   onToggle,
-  onAdded,
-  onError,
 }: {
   className?: string
   date: string
   today: string
   tasks: Task[]
   onToggle: (t: Task) => void
-  onAdded: () => void
-  onError: (msg: string) => void
 }) {
-  const [adding, setAdding] = useState(false)
-  const [title, setTitle] = useState('')
-  const [busy, setBusy] = useState(false)
   const done = tasks.filter((t) => t.done).length
   const label = date === today ? '오늘의 할 일' : `${fmt(parseDate(date), 'M월 d일')} 할 일`
-
-  const add = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!title.trim() || busy) return
-    setBusy(true)
-    try {
-      await api.post('/tasks', {
-        title,
-        due_date: date,
-        created_at: toDateTimeStr(new Date()),
-      })
-      setTitle('')
-      onAdded()
-    } catch (err) {
-      onError((err as Error).message)
-    } finally {
-      setBusy(false)
-    }
-  }
 
   return (
     <section className={`card flex flex-col p-5 ${className}`}>
@@ -395,30 +366,7 @@ function TodayTasks({
         <span className="ml-auto text-sm font-bold text-brand-ink">
           {done} / {tasks.length} 완료
         </span>
-        <button
-          className="btn-ghost btn-icon btn-sm -mr-1.5 min-h-8 rounded-full"
-          onClick={() => setAdding((a) => !a)}
-          aria-label={adding ? '입력창 닫기' : '할 일 추가'}
-          aria-expanded={adding}
-        >
-          {adding ? <MinusIcon /> : <PlusIcon />}
-        </button>
       </h2>
-
-      {adding && (
-        <form onSubmit={add} className="mb-2">
-          <input
-            className="input"
-            placeholder="할 일을 입력하고 Enter"
-            aria-label="새 할 일 (Enter로 추가)"
-            enterKeyHint="done"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={200}
-            autoFocus
-          />
-        </form>
-      )}
 
       {tasks.length === 0 ? (
         <Empty sprite={<PixelArt sprite={SPROUT} scale={3} />} text="할 일이 없어요. 여유로운 하루를 보내세요!" />

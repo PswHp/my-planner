@@ -64,15 +64,28 @@ export default function TasksPage() {
     }
     const tomorrow = toDateStr(addDays(new Date(), 1))
     const buckets = [
-      { title: '기한 지남', items: [] as Task[], test: (t: Task) => !t.done && !!t.due_date && t.due_date < today },
-      { title: '오늘', items: [] as Task[], test: (t: Task) => t.due_date === today },
+      // always: 할 일이 없어도 항상 보이는 묶음
+      {
+        title: '기한 지남',
+        items: [] as Task[],
+        always: true,
+        empty: '기한이 지난 할 일이 없어요',
+        test: (t: Task) => !t.done && !!t.due_date && t.due_date < today,
+      },
+      {
+        title: '오늘',
+        items: [] as Task[],
+        always: true,
+        empty: '오늘 마감인 할 일이 없어요',
+        test: (t: Task) => t.due_date === today,
+      },
       { title: '내일', items: [] as Task[], test: (t: Task) => t.due_date === tomorrow },
       { title: '예정', items: [] as Task[], test: (t: Task) => !!t.due_date && t.due_date > tomorrow },
       { title: '기한 없음', items: [] as Task[], test: (t: Task) => !t.due_date },
       { title: '지난 할 일', items: [] as Task[], test: () => true },
     ]
     for (const t of visible) buckets.find((b) => b.test(t))!.items.push(t)
-    return buckets.filter((b) => b.items.length > 0)
+    return buckets.filter((b) => b.items.length > 0 || ('always' in b && b.always))
   }, [tasks, filter, today])
 
   const openCount = tasks.filter((t) => !t.done).length
@@ -95,7 +108,9 @@ export default function TasksPage() {
 
       {groups.length === 0 && (
         <div className="card py-14 text-center">
-          <p className="text-2xl" aria-hidden="true">🌱</p>
+          <p className="text-2xl" aria-hidden="true">
+            🌱
+          </p>
           <p className="mt-2 text-sm text-ink-muted">할 일이 없습니다</p>
         </div>
       )}
@@ -103,41 +118,47 @@ export default function TasksPage() {
       <div className="space-y-5">
         {groups.map((g) => (
           <section key={g.title}>
-            <h2 className={`mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold ${g.title === '기한 지남' ? 'text-danger' : 'text-ink-muted'}`}>
+            <h2
+              className={`mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold ${g.title === '기한 지남' ? 'text-danger' : 'text-ink-muted'}`}
+            >
               {g.title}
               <span className="rounded-full bg-surface-sunken px-1.5 py-px text-[11px] font-medium text-ink-muted">{g.items.length}</span>
             </h2>
-            <ul className="card divide-y divide-line overflow-hidden">
-              {g.items.map((t) => (
-                <li key={t.id} className="flex items-start gap-3 px-4 py-3.5 transition hover:bg-surface-muted">
-                  <input
-                    type="checkbox"
-                    checked={!!t.done}
-                    onChange={() => toggle(t)}
-                    className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-brand"
-                    aria-label={`${t.title} 완료`}
-                  />
-                  <button className="min-w-0 flex-1 cursor-pointer text-left" onClick={() => setEditing(t)}>
-                    <span className={`block text-sm ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
-                    {(t.notes || t.due_date || t.priority > 0) && (
-                      <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
-                        {t.priority > 0 && (
-                          <span className={`rounded-full px-2 py-px font-medium ${PRIORITY[t.priority].className}`}>
-                            {PRIORITY[t.priority].label}
-                          </span>
-                        )}
-                        {t.due_date && (
-                          <span className={!t.done && t.due_date < today ? 'text-danger' : ''}>
-                            {fmt(parseDate(t.due_date), 'M월 d일 (EEE)')}
-                          </span>
-                        )}
-                        {t.notes && <span className="truncate">{t.notes}</span>}
-                      </span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            {g.items.length === 0 && 'empty' in g ? (
+              <p className="card px-4 py-3.5 text-sm text-ink-subtle">{g.empty}</p>
+            ) : (
+              <ul className="card divide-y divide-line overflow-hidden">
+                {g.items.map((t) => (
+                  <li key={t.id} className="flex items-start gap-3 px-4 py-3.5 transition hover:bg-surface-muted">
+                    <input
+                      type="checkbox"
+                      checked={!!t.done}
+                      onChange={() => toggle(t)}
+                      className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-brand"
+                      aria-label={`${t.title} 완료`}
+                    />
+                    <button className="min-w-0 flex-1 cursor-pointer text-left" onClick={() => setEditing(t)}>
+                      <span className={`block text-sm ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
+                      {(t.notes || t.due_date || t.priority > 0) && (
+                        <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+                          {t.priority > 0 && (
+                            <span className={`rounded-full px-2 py-px font-medium ${PRIORITY[t.priority].className}`}>
+                              {PRIORITY[t.priority].label}
+                            </span>
+                          )}
+                          {t.due_date && (
+                            <span className={!t.done && t.due_date < today ? 'text-danger' : ''}>
+                              {fmt(parseDate(t.due_date), 'M월 d일 (EEE)')}
+                            </span>
+                          )}
+                          {t.notes && <span className="truncate">{t.notes}</span>}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         ))}
       </div>
@@ -176,7 +197,10 @@ function QuickAdd({ onAdded }: { onAdded: () => void }) {
   }
 
   return (
-    <form onSubmit={submit} className="card flex flex-wrap items-center gap-2 p-2 transition focus-within:border-brand focus-within:ring-3 focus-within:ring-brand/15">
+    <form
+      onSubmit={submit}
+      className="card flex flex-wrap items-center gap-2 p-2 transition focus-within:border-brand focus-within:ring-3 focus-within:ring-brand/15"
+    >
       <input
         className="min-h-10 min-w-40 flex-1 bg-transparent px-2 text-[15px] outline-none placeholder:text-ink-subtle"
         placeholder="할 일 추가…"
@@ -230,55 +254,55 @@ function TaskModal({ task, onClose, onSaved }: { task: Task; onClose: () => void
 
   return (
     <>
-    {confirmingDelete && (
-      <ConfirmDialog
-        title="이 할 일을 삭제할까요?"
-        message={title.trim() || task.title}
-        onConfirm={remove}
-        onCancel={() => setConfirmingDelete(false)}
-      />
-    )}
-    <Modal
-      title="할 일 수정"
-      onClose={onClose}
-      footer={
-        <>
-          <button type="button" className="btn-danger" onClick={() => setConfirmingDelete(true)}>
-            삭제
-          </button>
-          <button type="button" className="btn-ghost ml-auto" onClick={onClose}>
-            취소
-          </button>
-          <button type="submit" form="task-form" className="btn-primary" disabled={!title.trim()}>
-            저장
-          </button>
-        </>
-      }
-    >
-      <form id="task-form" onSubmit={save} className="space-y-4">
-        <Field label="제목">
-          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="마감일">
-            <DateField label="마감일" value={due} onChange={setDue} clearable emptyLabel="기한 없음" />
+      {confirmingDelete && (
+        <ConfirmDialog
+          title="이 할 일을 삭제할까요?"
+          message={title.trim() || task.title}
+          onConfirm={remove}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
+      <Modal
+        title="할 일 수정"
+        onClose={onClose}
+        footer={
+          <>
+            <button type="button" className="btn-danger" onClick={() => setConfirmingDelete(true)}>
+              삭제
+            </button>
+            <button type="button" className="btn-ghost ml-auto" onClick={onClose}>
+              취소
+            </button>
+            <button type="submit" form="task-form" className="btn-primary" disabled={!title.trim()}>
+              저장
+            </button>
+          </>
+        }
+      >
+        <form id="task-form" onSubmit={save} className="space-y-4">
+          <Field label="제목">
+            <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
           </Field>
-          <Field label="우선순위">
-            <select className="input" value={priority} onChange={(e) => setPriority(Number(e.target.value))}>
-              {[0, 1, 2, 3].map((p) => (
-                <option key={p} value={p}>
-                  {PRIORITY[p].label}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="마감일">
+              <DateField label="마감일" value={due} onChange={setDue} clearable emptyLabel="기한 없음" />
+            </Field>
+            <Field label="우선순위">
+              <select className="input" value={priority} onChange={(e) => setPriority(Number(e.target.value))}>
+                {[0, 1, 2, 3].map((p) => (
+                  <option key={p} value={p}>
+                    {PRIORITY[p].label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+          <Field label="메모">
+            <textarea className="input min-h-24" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </Field>
-        </div>
-        <Field label="메모">
-          <textarea className="input min-h-24" value={notes} onChange={(e) => setNotes(e.target.value)} />
-        </Field>
-        {error && <p className="alert-error">{error}</p>}
-      </form>
-    </Modal>
+          {error && <p className="alert-error">{error}</p>}
+        </form>
+      </Modal>
     </>
   )
 }
