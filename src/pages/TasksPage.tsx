@@ -1,6 +1,7 @@
 import { addDays } from 'date-fns'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { DateField } from '../components/DateTimePicker'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
 import { api, type Task } from '../lib/api'
@@ -185,13 +186,7 @@ function QuickAdd({ onAdded }: { onAdded: () => void }) {
         onChange={(e) => setTitle(e.target.value)}
         aria-label="할 일 제목"
       />
-      <input
-        type="date"
-        className="min-h-9 rounded-lg border border-line bg-surface-muted px-2 text-xs text-ink-muted transition hover:border-line-strong"
-        value={due}
-        onChange={(e) => setDue(e.target.value)}
-        aria-label="마감일"
-      />
+      <DateField label="마감일" value={due} onChange={setDue} clearable emptyLabel="기한 없음" compact />
       <select
         className="min-h-9 rounded-lg border border-line bg-surface-muted px-2 text-xs text-ink-muted transition hover:border-line-strong"
         value={priority}
@@ -268,7 +263,7 @@ function TaskModal({ task, onClose, onSaved }: { task: Task; onClose: () => void
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="마감일">
-            <input type="date" className="input" value={due} onChange={(e) => setDue(e.target.value)} />
+            <DateField label="마감일" value={due} onChange={setDue} clearable emptyLabel="기한 없음" />
           </Field>
           <Field label="우선순위">
             <select className="input" value={priority} onChange={(e) => setPriority(Number(e.target.value))}>

@@ -1,5 +1,6 @@
 import { addDays, addMonths, eachDayOfInterval, endOfMonth, endOfWeek, isSameMonth, startOfMonth, startOfWeek } from 'date-fns'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { fmt, parseDate, toDateStr, todayStr } from '../lib/date'
 import { CalendarIcon, ChevronLeft, ChevronRight, ClockIcon } from './Icons'
 
@@ -18,7 +19,8 @@ export function formatDateLabel(value: string) {
 
 /** 'HH:mm' → '오후 3:30' */
 export function formatTimeLabel(value: string) {
-  const [h, m] = value.split(':').map(Number)
+  const [h24, m] = value.split(':').map(Number)
+  const h = h24 % 24 // '24:00'(자정)도 안전하게
   return `${h < 12 ? '오전' : '오후'} ${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')}`
 }
 
@@ -49,7 +51,8 @@ function PickerSheet({
     return () => window.removeEventListener('keydown', onKey, true)
   }, [onClose])
 
-  return (
+  // body에 직접 그려서 <label> 안에서 열려도 클릭이 입력 버튼으로 다시 전달되지 않게 함
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] flex animate-fade-in items-end justify-center bg-ink/30 sm:items-center sm:p-4"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
@@ -65,7 +68,8 @@ function PickerSheet({
         {children}
         {footer && <div className="mt-4 grid grid-cols-2 gap-2">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -75,11 +79,15 @@ function TriggerButton({
   children,
   onClick,
   ariaLabel,
+  compact = false,
+  muted = false,
 }: {
   icon: ReactNode
   children: ReactNode
   onClick: () => void
   ariaLabel: string
+  compact?: boolean
+  muted?: boolean
 }) {
   return (
     <button
@@ -87,10 +95,14 @@ function TriggerButton({
       onClick={onClick}
       aria-label={ariaLabel}
       aria-haspopup="dialog"
-      className="input flex cursor-pointer items-center gap-2 text-left font-medium tabular-nums hover:border-brand-light"
+      className={
+        compact
+          ? 'flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-line bg-surface-muted px-2.5 text-xs font-medium text-ink-muted tabular-nums transition hover:border-brand-light hover:text-ink'
+          : 'input flex cursor-pointer items-center gap-2 text-left font-medium tabular-nums hover:border-brand-light'
+      }
     >
-      <span className="shrink-0 text-brand">{icon}</span>
-      <span className="truncate">{children}</span>
+      <span className={`shrink-0 text-brand ${compact ? '[&>svg]:h-4 [&>svg]:w-4' : ''}`}>{icon}</span>
+      <span className={`truncate ${muted ? 'text-ink-subtle' : ''}`}>{children}</span>
     </button>
   )
 }
@@ -98,18 +110,40 @@ function TriggerButton({
 /* --------------------------------------------------------------------------
    날짜 선택
 -------------------------------------------------------------------------- */
-export function DateField({ value, onChange, min, label }: { value: string; onChange: (v: string) => void; min?: string; label: string }) {
+/**
+ * clearable: 값 없음('')을 허용 (예: 마감일 없음). 빈 값일 때 emptyLabel 표시
+ * compact: 작은 칩 모양 (빠른 추가 줄 등)
+ */
+export function DateField({
+  value,
+  onChange,
+  min,
+  label,
+  clearable = false,
+  emptyLabel = '날짜 없음',
+  compact = false,
+}: {
+  value: string
+  onChange: (v: string) => void
+  min?: string
+  label: string
+  clearable?: boolean
+  emptyLabel?: string
+  compact?: boolean
+}) {
   const [open, setOpen] = useState(false)
+  const text = value ? formatDateLabel(value) : emptyLabel
   return (
     <>
-      <TriggerButton icon={<CalendarIcon />} onClick={() => setOpen(true)} ariaLabel={`${label}: ${formatDateLabel(value)}`}>
-        {formatDateLabel(value)}
+      <TriggerButton icon={<CalendarIcon />} onClick={() => setOpen(true)} ariaLabel={`${label}: ${text}`} compact={compact} muted={!value}>
+        {text}
       </TriggerButton>
       {open && (
         <DatePickerDialog
           title={label}
           value={value}
           min={min}
+          clearLabel={clearable ? emptyLabel : undefined}
           onClose={() => setOpen(false)}
           onPick={(v) => {
             onChange(v)
@@ -125,29 +159,31 @@ function DatePickerDialog({
   title,
   value,
   min,
+  clearLabel,
   onPick,
   onClose,
 }: {
   title: string
   value: string
   min?: string
+  clearLabel?: string
   onPick: (v: string) => void
   onClose: () => void
 }) {
-  const [month, setMonth] = useState(() => startOfMonth(parseDate(value)))
+  const [month, setMonth] = useState(() => startOfMonth(value ? parseDate(value) : new Date()))
   const today = todayStr()
   const days = eachDayOfInterval({ start: startOfWeek(month), end: endOfWeek(endOfMonth(month)) })
   const quick: [string, string][] = [
     ['오늘', today],
     ['내일', toDateStr(addDays(new Date(), 1))],
-    ['일주일 뒤', toDateStr(addDays(parseDate(value), 7))],
+    ['일주일 뒤', toDateStr(addDays(value ? parseDate(value) : new Date(), 7))],
   ]
 
   return (
     <PickerSheet title={title} onClose={onClose}>
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs font-semibold text-ink-muted">{title}</p>
-        <p className="text-sm font-bold text-brand-ink">{formatDateLabel(value)}</p>
+        <p className="text-sm font-bold text-brand-ink">{value ? formatDateLabel(value) : clearLabel}</p>
       </div>
 
       <div className="mb-2 flex items-center justify-between">
@@ -217,6 +253,18 @@ function DatePickerDialog({
             {label}
           </button>
         ))}
+        {clearLabel && (
+          <button
+            type="button"
+            onClick={() => onPick('')}
+            aria-pressed={!value}
+            className={`ml-auto min-h-9 cursor-pointer rounded-full px-3.5 text-xs font-semibold transition ${
+              value ? 'text-ink-muted ring-1 ring-line hover:bg-surface-hover' : 'bg-brand text-white'
+            }`}
+          >
+            {clearLabel}
+          </button>
+        )}
       </div>
     </PickerSheet>
   )
@@ -271,7 +319,8 @@ function TimePickerDialog({
   onPick: (v: string) => void
   onClose: () => void
 }) {
-  const [h0, m0] = value.split(':').map(Number)
+  const [h24, m0] = value.split(':').map(Number)
+  const h0 = h24 % 24
   const [pm, setPm] = useState(h0 >= 12)
   const [hour12, setHour12] = useState(h0 % 12 === 0 ? 12 : h0 % 12)
   const [minute, setMinute] = useState(m0)

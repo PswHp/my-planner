@@ -1,6 +1,7 @@
 import { addDays } from 'date-fns'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent } from 'react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { DateField, TimeField } from '../components/DateTimePicker'
 import { ChevronLeft, ChevronRight, PlusIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
@@ -133,7 +134,9 @@ export default function TimeBlocksPage() {
             <ChevronRight />
           </button>
         </div>
-        <input type="date" className="input w-auto" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="날짜 선택" />
+        <div className="w-44">
+          <DateField label="날짜 선택" value={date} onChange={setDate} />
+        </div>
         <button
           className="btn-primary"
           onClick={() => {
@@ -294,6 +297,12 @@ function BlockModal({
   const [category, setCategory] = useState<Category>(draft.category ?? 'work')
   const [start, setStart] = useState(minToTime(draft.start_min))
   const [end, setEnd] = useState(minToTime(draft.end_min % 1440)) // 1440(자정)은 00:00으로 표시
+  // 시작을 옮기면 블록 길이를 유지한 채 종료도 함께 이동 (자정을 넘기지 않음)
+  const moveStart = (v: string) => {
+    const len = (timeToMin(end) || 1440) - timeToMin(start)
+    setStart(v)
+    setEnd(minToTime(Math.min(timeToMin(v) + (len > 0 ? len : 60), 1440) % 1440))
+  }
   const [taskId, setTaskId] = useState(draft.task_id ?? '')
   const [error, setError] = useState<string | null>(null)
 
@@ -356,10 +365,10 @@ function BlockModal({
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="시작">
-            <input type="time" step={900} className="input" value={start} onChange={(e) => setStart(e.target.value)} required />
+            <TimeField label="시작 시간" value={start} onChange={moveStart} minuteStep={15} />
           </Field>
           <Field label="종료">
-            <input type="time" step={900} className="input" value={end} onChange={(e) => setEnd(e.target.value)} required />
+            <TimeField label="종료 시간" value={end} onChange={setEnd} minuteStep={15} />
           </Field>
         </div>
         <Field label="카테고리">
