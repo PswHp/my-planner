@@ -1,5 +1,6 @@
 import { addDays } from 'date-fns'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent } from 'react'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ChevronLeft, ChevronRight, PlusIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
@@ -308,20 +309,31 @@ function BlockModal({
     }
   }
 
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+
   const remove = async () => {
-    if (!draft.id || !confirm('이 블록을 삭제할까요?')) return
+    if (!draft.id) return
     await api.del(`/blocks/${draft.id}`)
     onSaved()
   }
 
   return (
+    <>
+    {confirmingDelete && (
+      <ConfirmDialog
+        title="이 블록을 삭제할까요?"
+        message={`${title.trim() || '제목 없음'} · ${start}–${end}`}
+        onConfirm={remove}
+        onCancel={() => setConfirmingDelete(false)}
+      />
+    )}
     <Modal
       title={draft.id ? '블록 수정' : '새 타임 블록'}
       onClose={onClose}
       footer={
         <>
           {draft.id && (
-            <button type="button" className="btn-danger" onClick={remove}>
+            <button type="button" className="btn-danger" onClick={() => setConfirmingDelete(true)}>
               삭제
             </button>
           )}
@@ -378,5 +390,6 @@ function BlockModal({
         {error && <p className="text-sm text-[#b42f2f]">{error}</p>}
       </form>
     </Modal>
+    </>
   )
 }
