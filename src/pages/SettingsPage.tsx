@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { Avatar, PageHeader } from '../components/Layout'
 import { api, type User } from '../lib/api'
+import { applyTheme, getTheme, THEMES, type ThemeId } from '../lib/theme'
 
 export default function SettingsPage({ user, onSignedOut }: { user: User; onSignedOut: () => void }) {
   const [confirm, setConfirm] = useState('')
@@ -40,6 +41,8 @@ export default function SettingsPage({ user, onSignedOut }: { user: User; onSign
           로그아웃
         </button>
       </section>
+
+      <ThemePicker />
 
       <section className="card p-5">
         <h2 className="section-title">내 데이터 내보내기</h2>
@@ -81,5 +84,56 @@ export default function SettingsPage({ user, onSignedOut }: { user: User; onSign
         </Link>
       </p>
     </div>
+  )
+}
+
+/** 테마 색 선택 — 이 기기에만 저장 */
+function ThemePicker() {
+  const [theme, setTheme] = useState<ThemeId>(getTheme)
+  const choose = (id: ThemeId) => {
+    setTheme(id)
+    applyTheme(id)
+  }
+  return (
+    <section className="card p-5">
+      <h2 className="section-title">테마 색</h2>
+      <p className="mt-1 mb-4 text-sm text-ink-muted">사이트 전체의 포인트 색을 바꿔요. 선택한 테마는 이 기기에만 저장돼요.</p>
+      <div role="radiogroup" aria-label="테마 색" className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        {THEMES.map((t) => {
+          const on = t.id === theme
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => choose(t.id)}
+              className={`flex cursor-pointer items-center gap-3 rounded-control border p-3 text-left transition active:scale-[0.98] sm:flex-col sm:gap-2 sm:text-center ${
+                on ? 'border-brand bg-brand-soft ring-2 ring-brand/25' : 'border-line bg-field hover:border-line-strong'
+              }`}
+            >
+              <span
+                className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full ring-1 ring-black/5"
+                style={{ background: `conic-gradient(${t.swatch[0]} 0 50%, ${t.swatch[2]} 0 75%, ${t.swatch[1]} 0)` }}
+                aria-hidden="true"
+              >
+                {on && (
+                  <span
+                    className="grid h-5 w-5 place-items-center rounded-full bg-white/90 text-[11px] font-bold"
+                    style={{ color: t.swatch[2] }}
+                  >
+                    ✓
+                  </span>
+                )}
+              </span>
+              <span className="min-w-0">
+                <span className={`block text-sm font-semibold ${on ? 'text-brand-ink' : ''}`}>{t.label}</span>
+                <span className="block text-xs text-ink-subtle">{t.desc}</span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </section>
   )
 }

@@ -223,23 +223,32 @@ function Greeting({ user, selected, today, onSelect }: { user: User; selected: s
         <p className="mt-1 text-sm text-ink-muted">오늘도 계획한 일들을 하나씩 완성해볼까요?</p>
       </div>
 
-      <div className="flex w-full items-center justify-between rounded-full border border-line bg-field p-1 shadow-card sm:w-auto">
-        <button className="btn-ghost btn-icon min-h-9 rounded-full" onClick={() => shift(-1)} aria-label="이전 날">
-          <ChevronLeft />
-        </button>
+      {/* 날짜 이동 — 날짜가 바뀌어도 크기가 변하지 않도록 고정 너비 + '오늘' 버튼은 항상 같은 자리 */}
+      <div className="flex w-full items-center gap-2 sm:w-auto">
+        <div className="flex min-w-0 flex-1 items-center justify-between rounded-full border border-line bg-field p-1 shadow-card sm:flex-none">
+          <button className="btn-ghost btn-icon min-h-9 rounded-full" onClick={() => shift(-1)} aria-label="이전 날">
+            <ChevronLeft />
+          </button>
+          <span
+            className="flex min-h-9 items-center justify-center gap-2 px-1 text-[15px] font-semibold tabular-nums sm:w-[13.5rem]"
+            aria-live="polite"
+          >
+            <span className="text-brand">
+              <CalendarIcon />
+            </span>
+            {fmt(parseDate(selected), 'yyyy년 M월 d일 (EEE)')}
+          </span>
+          <button className="btn-ghost btn-icon min-h-9 rounded-full" onClick={() => shift(1)} aria-label="다음 날">
+            <ChevronRight />
+          </button>
+        </div>
         <button
-          className="flex min-h-9 items-center gap-2 rounded-full px-3 text-[15px] font-semibold transition hover:bg-surface-hover"
+          className="btn-secondary h-11 shrink-0 rounded-full px-4 shadow-card"
           onClick={() => onSelect(today)}
+          disabled={selected === today}
           title="오늘로 이동"
         >
-          <span className="text-brand">
-            <CalendarIcon />
-          </span>
-          {fmt(parseDate(selected), 'yyyy년 M월 d일 (EEE)')}
-          {selected !== today && <span className="chip">오늘로</span>}
-        </button>
-        <button className="btn-ghost btn-icon min-h-9 rounded-full" onClick={() => shift(1)} aria-label="다음 날">
-          <ChevronRight />
+          오늘
         </button>
       </div>
     </header>
@@ -262,7 +271,7 @@ function PetCard({ className = '' }: { className?: string }) {
   return (
     <section className={`card flex gap-3 p-3 sm:gap-4 ${className}`} aria-label="나의 동물 (미리보기)">
       {/* 장면 */}
-      <div className="relative min-h-[210px] w-[42%] shrink-0 overflow-hidden rounded-[14px] bg-gradient-to-b from-sky to-[#f8fbf1] sm:min-h-[236px] sm:w-[46%]">
+      <div className="relative min-h-[210px] w-[42%] shrink-0 overflow-hidden rounded-[14px] bg-gradient-to-b from-sky to-sky-end sm:min-h-[236px] sm:w-[46%]">
         <PixelArt sprite={CLOUD} scale={3} className="absolute top-4 left-[18%] opacity-90" />
         <PixelArt sprite={CLOUD} scale={2} className="absolute top-9 right-[12%] opacity-80" />
         <PixelArt sprite={TREE} scale={4} className="absolute bottom-[14px] -left-5 h-auto w-16 sm:-left-4 sm:w-24" />
