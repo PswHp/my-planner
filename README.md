@@ -1,8 +1,9 @@
 <div align="center">
 
-# 📅 플래너
+# 🐾 Dailumi (데일루미)
 
-**캘린더 · 할 일 · 타임 블록 · 통계를 한 곳에서 관리하는 일정 관리 웹 서비스**
+**동물 친구와 함께하는 게임형 플래너**<br>
+캘린더 · 할 일 · 타임 블록 · 통계를 한 곳에서 관리하세요
 
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
@@ -15,10 +16,15 @@
 
 </div>
 
-일정, 해야 할 일, 하루 시간 계획을 따로따로 관리하느라 번거로웠다면 — 플래너에서 한 번에 정리하세요.
+일정, 해야 할 일, 하루 시간 계획을 따로따로 관리하느라 번거로웠다면 — Dailumi에서 한 번에 정리하세요.
 Google 계정으로 로그인하면 바로 시작할 수 있고, PC와 모바일 어디서든 같은 데이터를 볼 수 있습니다.
 
 ## ✨ 주요 기능
+
+### 🏠 대시보드
+- 오늘의 할 일, 오늘의 일정, 이번 달 캘린더를 **한 화면에서** 확인
+- **이번 주 진행률**과 **연속 달성** 기록으로 꾸준함을 한눈에
+- 나의 동물 친구 — 수집 · 꾸미기 기능은 **준비 중**이에요
 
 ### 📆 캘린더
 - 한 달 일정을 한눈에 보는 **월간 달력**

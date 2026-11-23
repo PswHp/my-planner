@@ -21,7 +21,7 @@ export function PrivacyPage() {
   return (
     <LegalLayout title="개인정보처리방침">
       <p>
-        {SITE.operator}(이하 “운영자”)는 {SITE.name} 서비스(이하 “서비스”) 이용자의 개인정보를 「개인정보 보호법」 등 관련 법령에 따라
+        {SITE.operator}(이하 “운영자”)는 {SITE.name}({SITE.nameKo}) 서비스(이하 “서비스”) 이용자의 개인정보를 「개인정보 보호법」 등 관련 법령에 따라
         보호하며, 다음과 같이 개인정보를 처리합니다.
       </p>
       <section>
@@ -106,7 +106,7 @@ export function TermsPage() {
       <section>
         <h2>1. 목적</h2>
         <p>
-          이 약관은 {SITE.operator}(이하 “운영자”)가 제공하는 {SITE.name} 서비스(이하 “서비스”)의 이용 조건과 절차를 정합니다.
+          이 약관은 {SITE.operator}(이하 “운영자”)가 제공하는 {SITE.name}({SITE.nameKo}) 서비스(이하 “서비스”)의 이용 조건과 절차를 정합니다.
         </p>
       </section>
       <section>

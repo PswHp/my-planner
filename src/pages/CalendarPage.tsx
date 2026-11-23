@@ -333,7 +333,7 @@ function eventTimeLabel(ev: CalendarEvent) {
   return `${ev.start_at.slice(11)} – ${fmt(parseDate(ev.end_at), 'M/d')} ${ev.end_at.slice(11)}`
 }
 
-function EventModal({
+export function EventModal({
   initial,
   onClose,
   onSaved,

@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /* ==========================================================================
-   디자인 토큰 — Soft Minimal Game UI
+   디자인 토큰 — Soft Minimal Game UI (Dailumi)
    색/둥글기/그림자는 모두 여기서만 정의합니다.
    테마(포인트 컬러 등)를 바꿀 때는 이 블록만 수정하면 됩니다.
    토큰 이름은 Tailwind 유틸리티로 바로 쓸 수 있습니다.
@@ -9,37 +9,49 @@
          --radius-card → rounded-card,  --shadow-card → shadow-card
    ========================================================================== */
 @theme {
-  --font-sans: 'Pretendard', ui-sans-serif, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-sans: 'Pretendard Variable', 'Pretendard', ui-sans-serif, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR',
+    'Malgun Gothic', sans-serif;
 
-  /* 배경 · 표면 */
-  --color-bg: #f5f6f2; /* 페이지 배경 */
-  --color-surface: #ffffff; /* 카드 · 모달 */
-  --color-surface-muted: #f3f5f0; /* 은은한 채움 (배지, 보조 영역) */
-  --color-surface-hover: #eef1ea; /* 호버 배경 */
-  --color-surface-sunken: #e8ebe4; /* 세그먼트 트랙 등 움푹한 영역 */
+  /* 배경 · 표면 (Dailumi: 크림 + 자연스러운 초록) */
+  --color-bg: #f7f8f3; /* 페이지 배경 */
+  --color-surface: #fff9f2; /* 카드 · 모달 (크림) */
+  --color-field: #ffffff; /* 입력창 · 리스트 행 */
+  --color-sidebar: #fffbf5; /* 사이드바 */
+  --color-surface-muted: #f6f3ea; /* 은은한 채움 (배지, 보조 영역) */
+  --color-surface-hover: #eff3e7; /* 호버 배경 */
+  --color-surface-sunken: #eaede1; /* 세그먼트 트랙 등 움푹한 영역 */
+  --color-sky: #e9f4e2; /* 동물 카드 배경 (하늘/들판) */
 
-  /* 텍스트 (흰 배경 기준 대비: ink 15:1, muted 6.2:1, subtle 4.6:1) */
-  --color-ink: #1d2420;
-  --color-ink-muted: #5a645d;
-  --color-ink-subtle: #676f69;
+  /* 텍스트 (크림 배경 기준 대비: ink 12:1, muted 5.3:1, subtle 4.9:1) */
+  --color-ink: #2b332d;
+  --color-ink-muted: #5f6b62;
+  --color-ink-subtle: #646f66;
 
   /* 테두리 */
-  --color-line: #e3e7df;
-  --color-line-strong: #cfd5cb;
+  --color-line: #e2ecd9;
+  --color-line-strong: #c9d9c0;
 
-  /* 포인트 컬러 (차분한 그린) — 흰 글자 대비 4.9:1 */
-  --color-brand: #2b7f57;
-  --color-brand-hover: #236b49;
-  --color-brand-soft: #e6f3ec; /* 선택된 메뉴 · 강조 배경 */
-  --color-brand-ink: #1f6645; /* brand-soft 위 글자 (6:1) */
+  /* 포인트 컬러
+     brand        진한 초록 — 버튼 배경, 강조 글자 (흰 글자 대비 4.8:1)
+     brand-accent 메인 초록 #6BB16D — 진행 바, 장식 (글자에는 쓰지 않음)
+     brand-light  준액센트 #A8D5A2 — 보조 장식
+     brand-soft   선택된 메뉴 · 배지 배경
+     brand-ink    brand-soft 위 글자 (5.5:1) */
+  --color-brand: #4e7c59;
+  --color-brand-hover: #426b4c;
+  --color-brand-accent: #6bb16d;
+  --color-brand-light: #a8d5a2;
+  --color-brand-soft: #e4f2dc;
+  --color-brand-ink: #2f6b3f;
 
   /* 상태 색 */
-  --color-danger: #c43c3c;
-  --color-danger-hover: #a93232;
-  --color-danger-soft: #fbeceb;
-  --color-danger-line: #f2c9c7;
+  --color-danger: #c2413a;
+  --color-danger-hover: #a63630;
+  --color-danger-soft: #fbebe8;
+  --color-danger-line: #f1c8c3;
   --color-warning: #8a5a00;
-  --color-warning-soft: #fdf3dc;
+  --color-warning-soft: #fdf1d6;
+  --color-sunday: #d0463f;
 
   /* 데이터 색 (일정 색상 · 타임블록 카테고리) — 범주형 팔레트, 순서 고정 */
   --color-c-blue: #2a78d6;
@@ -53,18 +65,21 @@
 
   /* 둥글기 */
   --radius-control: 0.625rem; /* 버튼 · 입력창 (10px) */
-  --radius-card: 1rem; /* 카드 (16px) */
+  --radius-card: 1.125rem; /* 카드 (18px) */
   --radius-sheet: 1.5rem; /* 모달 · 바텀시트 (24px) */
 
   /* 그림자 — 얇고 은은하게 */
-  --shadow-card: 0 1px 2px rgb(29 36 32 / 0.04), 0 1px 3px rgb(29 36 32 / 0.03);
-  --shadow-raised: 0 2px 6px rgb(29 36 32 / 0.06), 0 1px 2px rgb(29 36 32 / 0.04);
-  --shadow-pop: 0 16px 40px -12px rgb(29 36 32 / 0.22), 0 2px 6px rgb(29 36 32 / 0.06);
+  --shadow-card: 0 1px 2px rgb(78 124 89 / 0.05), 0 4px 14px -6px rgb(78 124 89 / 0.12);
+  --shadow-raised: 0 2px 6px rgb(78 124 89 / 0.08), 0 1px 2px rgb(43 51 45 / 0.04);
+  --shadow-pop: 0 18px 44px -12px rgb(43 51 45 / 0.24), 0 2px 6px rgb(43 51 45 / 0.06);
 
   /* 짧고 자연스러운 인터랙션 */
   --animate-pop-in: pop-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-sheet-in: sheet-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-fade-in: fade-in 160ms ease-out;
+  /* 픽셀 캐릭터의 느린 숨쉬기 (게임 느낌) */
+  --animate-bob: bob 2.4s steps(2, jump-none) infinite;
+  --animate-bob-slow: bob 3.2s ease-in-out infinite;
 
   @keyframes pop-in {
     from {
@@ -76,6 +91,11 @@
     from {
       transform: translateY(16px);
       opacity: 0;
+    }
+  }
+  @keyframes bob {
+    50% {
+      transform: translateY(-3px);
     }
   }
   @keyframes fade-in {
@@ -97,6 +117,8 @@
     background: var(--color-bg);
     color: var(--color-ink);
     -webkit-font-smoothing: antialiased;
+    word-break: keep-all; /* 한글 단어 중간 줄바꿈 방지 */
+    overflow-wrap: anywhere;
     text-rendering: optimizeLegibility;
   }
   :focus-visible {
@@ -138,7 +160,7 @@
     @apply bg-brand text-white shadow-card hover:bg-brand-hover;
   }
   .btn-secondary {
-    @apply border border-line bg-surface text-ink hover:border-line-strong hover:bg-surface-hover;
+    @apply border border-line-strong bg-field text-ink hover:border-brand-light hover:bg-surface-hover;
   }
   .btn-ghost {
     @apply text-ink-muted hover:bg-surface-hover hover:text-ink;
@@ -159,7 +181,7 @@
 
   /* 입력창 */
   .input {
-    @apply min-h-10 w-full rounded-control border border-line-strong bg-surface px-3 py-2 text-sm text-ink transition duration-150 outline-none placeholder:text-ink-subtle hover:border-ink-subtle/50 focus:border-brand focus:ring-3 focus:ring-brand/15;
+    @apply min-h-10 w-full rounded-control border border-line-strong bg-field px-3 py-2 text-sm text-ink transition duration-150 outline-none placeholder:text-ink-subtle hover:border-ink-subtle/50 focus:border-brand focus:ring-3 focus:ring-brand/15;
   }
 
   /* 세그먼트 탭 (필터, 기간 선택 등) — 선택 항목에 aria-selected="true" */
@@ -170,7 +192,7 @@
     @apply flex-1 cursor-pointer rounded-lg px-3 py-1.5 font-medium whitespace-nowrap text-ink-muted transition duration-150 hover:text-ink;
   }
   .segmented > [role='tab'][aria-selected='true'] {
-    @apply bg-surface text-ink shadow-raised;
+    @apply bg-field text-ink shadow-raised;
   }
 
   /* 알림 메시지 */
@@ -181,5 +203,23 @@
   /* 섹션 제목 (카드 안) */
   .section-title {
     @apply text-[15px] font-semibold text-ink;
+  }
+  /* 카드 머리글 (아이콘 + 제목 + 오른쪽 보조 영역) */
+  .card-head {
+    @apply mb-3 flex min-h-8 items-center gap-2 text-[15px] font-bold text-ink;
+  }
+  .card-head > svg {
+    @apply shrink-0 text-brand;
+  }
+  /* 작은 배지 */
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-semibold text-brand-ink;
+  }
+  /* 진행 바 */
+  .progress {
+    @apply h-2.5 overflow-hidden rounded-full bg-surface-sunken;
+  }
+  .progress > span {
+    @apply block h-full rounded-full bg-brand-accent transition-[width] duration-500;
   }
 }

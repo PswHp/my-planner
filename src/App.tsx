@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router'
 import { Layout } from './components/Layout'
 import { api, ApiError, type User } from './lib/api'
 import CalendarPage from './pages/CalendarPage'
+import DashboardPage from './pages/DashboardPage'
 import { PrivacyPage, TermsPage } from './pages/LegalPages'
 import LoginPage from './pages/LoginPage'
 import SettingsPage from './pages/SettingsPage'
@@ -58,12 +59,13 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout user={user} onLogout={signedOut} />}>
+        <Route path="/dashboard" element={<DashboardPage user={user} />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/blocks" element={<TimeBlocksPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/settings" element={<SettingsPage user={user} onSignedOut={signedOut} />} />
-        <Route path="*" element={<Navigate to="/calendar" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>
   )

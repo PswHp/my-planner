@@ -81,3 +81,69 @@ export const PlusIcon = () => (
     <path d="M12 5v14M5 12h14" />
   </svg>
 )
+export const HomeIcon = () => (
+  <svg {...base}>
+    <path d="M3 10.5 12 3l9 7.5" />
+    <path d="M5 9v11h14V9M10 20v-6h4v6" />
+  </svg>
+)
+export const PawIcon = () => (
+  <svg {...base}>
+    <circle cx="5.5" cy="10" r="2" />
+    <circle cx="9.5" cy="5.5" r="2" />
+    <circle cx="14.5" cy="5.5" r="2" />
+    <circle cx="18.5" cy="10" r="2" />
+    <path d="M12 11c-3 0-6 4.5-6 7a3 3 0 0 0 3 3c1.2 0 2-.6 3-.6s1.8.6 3 .6a3 3 0 0 0 3-3c0-2.5-3-7-6-7z" />
+  </svg>
+)
+export const BagIcon = () => (
+  <svg {...base}>
+    <path d="M5 8h14l-1 13H6z" />
+    <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+  </svg>
+)
+export const TrophyIcon = () => (
+  <svg {...base}>
+    <path d="M8 4h8v5a4 4 0 0 1-8 0z" />
+    <path d="M16 5h3v2a3 3 0 0 1-3 3M8 5H5v2a3 3 0 0 0 3 3M12 13v4M8 21h8M9 17h6v4H9z" />
+  </svg>
+)
+export const FriendsIcon = () => (
+  <svg {...base}>
+    <circle cx="9" cy="8" r="3.5" />
+    <path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5" />
+    <path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c1.7.8 2.9 2.5 3.5 5.2" />
+  </svg>
+)
+export const ShirtIcon = () => (
+  <svg {...base}>
+    <path d="M8 3 3 6l2 4 2-1v12h10V9l2 1 2-4-5-3a4 4 0 0 1-8 0z" />
+  </svg>
+)
+export const HeartIcon = () => (
+  <svg {...base}>
+    <path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.2 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z" />
+  </svg>
+)
+export const InfoIcon = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5M12 8h.01" />
+  </svg>
+)
+export const ClipboardIcon = () => (
+  <svg {...base}>
+    <rect x="5" y="4" width="14" height="17" rx="2" />
+    <path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3" />
+  </svg>
+)
+export const BarsIcon = () => (
+  <svg {...base}>
+    <path d="M5 20v-5M10 20V9M15 20v-8M20 20V4" />
+  </svg>
+)
+export const PencilIcon = () => (
+  <svg {...base} width={16} height={16}>
+    <path d="m4 20 1-4L16 5l3 3L8 19z" />
+  </svg>
+)
