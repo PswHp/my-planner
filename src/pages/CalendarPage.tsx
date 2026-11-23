@@ -12,11 +12,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { ColorPicker } from '../components/ColorPicker'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { DateField, TimeField } from '../components/DateTimePicker'
 import { ChevronLeft, ChevronRight, PlusIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
 import { api, COLOR_HEX, type CalendarEvent, type Color, type Task } from '../lib/api'
-import { fmt, parseDate, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
+import { fmt, formatDuration, parseDate, timeToMin, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -74,7 +75,9 @@ export default function CalendarPage() {
     const list = tasks.filter(
       (t) => t.due_date === selected || (selected === today && !t.done && !!t.due_date && t.due_date < today),
     )
-    return list.sort((a, b) => a.done - b.done || (a.due_date ?? '').localeCompare(b.due_date ?? '') || b.priority - a.priority)
+    return list.sort(
+      (a, b) => a.done - b.done || (a.due_date ?? '').localeCompare(b.due_date ?? '') || b.priority - a.priority,
+    )
   }, [tasks, selected, today])
 
   const toggleTask = async (t: Task) => {
@@ -90,13 +93,24 @@ export default function CalendarPage() {
   }
 
   const openNew = (date: string) =>
-    setEditing({ title: '', start_at: `${date}T09:00`, end_at: `${date}T10:00`, all_day: 0, color: 'blue', description: '' })
+    setEditing({
+      title: '',
+      start_at: `${date}T09:00`,
+      end_at: `${date}T10:00`,
+      all_day: 0,
+      color: 'blue',
+      description: '',
+    })
 
   return (
     <div>
       <PageHeader title={fmt(month, 'yyyy년 M월')}>
         <div className="flex items-center rounded-control border border-line bg-surface p-0.5 shadow-card">
-          <button className="btn-ghost btn-icon min-h-9" onClick={() => setMonth(addMonths(month, -1))} aria-label="이전 달">
+          <button
+            className="btn-ghost btn-icon min-h-9"
+            onClick={() => setMonth(addMonths(month, -1))}
+            aria-label="이전 달"
+          >
             <ChevronLeft />
           </button>
           <button
@@ -108,7 +122,11 @@ export default function CalendarPage() {
           >
             오늘
           </button>
-          <button className="btn-ghost btn-icon min-h-9" onClick={() => setMonth(addMonths(month, 1))} aria-label="다음 달">
+          <button
+            className="btn-ghost btn-icon min-h-9"
+            onClick={() => setMonth(addMonths(month, 1))}
+            aria-label="다음 달"
+          >
             <ChevronRight />
           </button>
         </div>
@@ -174,7 +192,9 @@ export default function CalendarPage() {
                       className="truncate rounded-md px-1 py-px text-[11px] leading-4 font-medium text-white"
                       style={{ background: COLOR_HEX[ev.color] }}
                     >
-                      <span className="hidden md:inline">{!ev.all_day && ev.start_at.slice(0, 10) === ds ? `${ev.start_at.slice(11)} ` : ''}</span>
+                      <span className="hidden md:inline">
+                        {!ev.all_day && ev.start_at.slice(0, 10) === ds ? `${ev.start_at.slice(11)} ` : ''}
+                      </span>
                       {ev.title}
                     </div>
                   ))}
@@ -187,42 +207,40 @@ export default function CalendarPage() {
 
         {/* 선택한 날짜 상세: 일정 + 할 일 */}
         <div className="h-fit space-y-4">
-        <div className="card p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="section-title">
-              {fmt(parseDate(selected), 'M월 d일 (EEE)')} <span className="text-sm font-normal text-ink-muted">일정</span>
-            </h2>
-            <button className="btn-ghost btn-sm" onClick={() => openNew(selected)}>
-              <PlusIcon /> 추가
-            </button>
+          <div className="card p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="section-title">
+                {fmt(parseDate(selected), 'M월 d일 (EEE)')}{' '}
+                <span className="text-sm font-normal text-ink-muted">일정</span>
+              </h2>
+              <button className="btn-ghost btn-sm" onClick={() => openNew(selected)}>
+                <PlusIcon /> 추가
+              </button>
+            </div>
+            {selectedItems.events.length === 0 && (
+              <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">
+                일정이 없습니다
+              </p>
+            )}
+            <ul className="space-y-1">
+              {selectedItems.events.map((ev) => (
+                <li key={ev.id}>
+                  <button
+                    onClick={() => setEditing(ev)}
+                    className="flex w-full cursor-pointer gap-3 rounded-control p-2.5 text-left transition hover:bg-surface-hover"
+                  >
+                    <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ background: COLOR_HEX[ev.color] }} />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium">{ev.title}</span>
+                      <span className="block text-xs text-ink-muted">{eventTimeLabel(ev)}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
-          {selectedItems.events.length === 0 && (
-            <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">일정이 없습니다</p>
-          )}
-          <ul className="space-y-1">
-            {selectedItems.events.map((ev) => (
-              <li key={ev.id}>
-                <button
-                  onClick={() => setEditing(ev)}
-                  className="flex w-full cursor-pointer gap-3 rounded-control p-2.5 text-left transition hover:bg-surface-hover"
-                >
-                  <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ background: COLOR_HEX[ev.color] }} />
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium">{ev.title}</span>
-                    <span className="block text-xs text-ink-muted">{eventTimeLabel(ev)}</span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
 
-        <DayTasks
-          date={selected}
-          tasks={dayTasks}
-          onToggle={toggleTask}
-          onAdded={load}
-        />
+          <DayTasks date={selected} tasks={dayTasks} onToggle={toggleTask} onAdded={load} />
         </div>
       </div>
 
@@ -273,7 +291,10 @@ function DayTasks({
     <div className="card p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="section-title">
-          할 일 <span className="text-sm font-normal text-ink-muted">{tasks.length ? `${openCount}/${tasks.length}` : ''}</span>
+          할 일{' '}
+          <span className="text-sm font-normal text-ink-muted">
+            {tasks.length ? `${openCount}/${tasks.length}` : ''}
+          </span>
         </h2>
         <Link to="/tasks" className="btn-ghost btn-sm">
           전체 보기
@@ -281,7 +302,9 @@ function DayTasks({
       </div>
 
       {tasks.length === 0 && (
-        <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">이 날 마감인 할 일이 없습니다</p>
+        <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">
+          이 날 마감인 할 일이 없습니다
+        </p>
       )}
       <ul className="space-y-0.5">
         {tasks.map((t) => {
@@ -296,7 +319,9 @@ function DayTasks({
                   className="mt-0.5 h-[18px] w-[18px] shrink-0 cursor-pointer accent-brand"
                 />
                 <span className="min-w-0 flex-1">
-                  <span className={`block truncate text-sm ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
+                  <span className={`block truncate text-sm ${t.done ? 'text-ink-subtle line-through' : ''}`}>
+                    {t.title}
+                  </span>
                   {overdue && (
                     <span className="text-xs text-danger">기한 지남 · {fmt(parseDate(t.due_date!), 'M/d')}</span>
                   )}
@@ -350,6 +375,28 @@ export function EventModal({
   const [endTime, setEndTime] = useState(initial.all_day ? '10:00' : initial.end_at!.slice(11))
   const [color, setColor] = useState<Color>(initial.color ?? 'blue')
   const [description, setDescription] = useState(initial.description ?? '')
+
+  // 일정 길이(분) — 시작을 옮기면 길이를 유지한 채 종료도 함께 이동
+  const at = (d: string, t: string) => parseDate(d).getTime() + timeToMin(t) * 60_000
+  const duration = Math.round((at(endDate, endTime) - at(startDate, startTime)) / 60_000)
+  const setEndFrom = (ms: number) => {
+    const s = toDateTimeStr(new Date(ms))
+    setEndDate(s.slice(0, 10))
+    setEndTime(s.slice(11))
+  }
+  const moveStart = (d: string, t: string) => {
+    if (allDay) {
+      const span = Math.round((parseDate(endDate).getTime() - parseDate(startDate).getTime()) / 86_400_000)
+      setStartDate(d)
+      setEndDate(toDateStr(addDays(parseDate(d), Math.max(0, span))))
+      return
+    }
+    const keep = duration > 0 ? duration : 60
+    setStartDate(d)
+    setStartTime(t)
+    setEndFrom(at(d, t) + keep * 60_000)
+  }
+  const setLength = (min: number) => setEndFrom(at(startDate, startTime) + min * 60_000)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -380,77 +427,107 @@ export function EventModal({
 
   return (
     <>
-    {confirmingDelete && (
-      <ConfirmDialog
-        title="이 일정을 삭제할까요?"
-        message={`${title.trim() || '제목 없음'} · ${fmt(parseDate(startDate), 'M월 d일 (EEE)')} ${allDay ? '종일' : startTime}`}
-        onConfirm={remove}
-        onCancel={() => setConfirmingDelete(false)}
-      />
-    )}
-    <Modal
-      title={initial.id ? '일정 수정' : '새 일정'}
-      onClose={onClose}
-      footer={
-        <>
-          {initial.id && (
-            <button type="button" className="btn-danger" onClick={() => setConfirmingDelete(true)}>
-              삭제
+      {confirmingDelete && (
+        <ConfirmDialog
+          title="이 일정을 삭제할까요?"
+          message={`${title.trim() || '제목 없음'} · ${fmt(parseDate(startDate), 'M월 d일 (EEE)')} ${allDay ? '종일' : startTime}`}
+          onConfirm={remove}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
+      <Modal
+        title={initial.id ? '일정 수정' : '새 일정'}
+        onClose={onClose}
+        footer={
+          <>
+            {initial.id && (
+              <button type="button" className="btn-danger" onClick={() => setConfirmingDelete(true)}>
+                삭제
+              </button>
+            )}
+            <button type="button" className="btn-ghost ml-auto" onClick={onClose}>
+              취소
             </button>
-          )}
-          <button type="button" className="btn-ghost ml-auto" onClick={onClose}>
-            취소
-          </button>
-          <button type="submit" form="event-form" className="btn-primary" disabled={saving || !title.trim()}>
-            저장
-          </button>
-        </>
-      }
-    >
-      <form id="event-form" onSubmit={save} className="space-y-4">
-        <Field label="제목">
-          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus required />
-        </Field>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} />
-          종일
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="시작">
-            <input
-              type="date"
-              className="input"
-              value={startDate}
-              onChange={(e) => {
-                setStartDate(e.target.value)
-                if (e.target.value > endDate) setEndDate(e.target.value)
-              }}
-              required
-            />
+            <button type="submit" form="event-form" className="btn-primary" disabled={saving || !title.trim()}>
+              저장
+            </button>
+          </>
+        }
+      >
+        <form id="event-form" onSubmit={save} className="space-y-4">
+          <Field label="제목">
+            <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus required />
           </Field>
-          {!allDay && (
-            <Field label="시작 시간">
-              <input type="time" className="input" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
-            </Field>
-          )}
-          <Field label="종료">
-            <input type="date" className="input" value={endDate} min={startDate} onChange={(e) => setEndDate(e.target.value)} required />
+          <div className="space-y-3 rounded-card bg-surface-muted p-3.5">
+            <label className="flex min-h-8 cursor-pointer items-center justify-between text-sm font-medium">
+              종일
+              <input
+                type="checkbox"
+                className="h-[18px] w-[18px] cursor-pointer"
+                checked={allDay}
+                onChange={(e) => setAllDay(e.target.checked)}
+              />
+            </label>
+            <div>
+              <p className="mb-1.5 text-xs font-semibold text-ink-muted">시작</p>
+              <div className="flex gap-2">
+                <div className="min-w-0 flex-1">
+                  <DateField label="시작 날짜" value={startDate} onChange={(v) => moveStart(v, startTime)} />
+                </div>
+                {!allDay && (
+                  <div className="w-[8.5rem] shrink-0">
+                    <TimeField label="시작 시간" value={startTime} onChange={(v) => moveStart(startDate, v)} />
+                  </div>
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="mb-1.5 flex items-center justify-between text-xs font-semibold text-ink-muted">
+                종료
+                {!allDay && duration > 0 && (
+                  <span className="font-medium text-ink-subtle">{formatDuration(duration)}</span>
+                )}
+              </p>
+              <div className="flex gap-2">
+                <div className="min-w-0 flex-1">
+                  <DateField label="종료 날짜" value={endDate} min={startDate} onChange={setEndDate} />
+                </div>
+                {!allDay && (
+                  <div className="w-[8.5rem] shrink-0">
+                    <TimeField label="종료 시간" value={endTime} onChange={setEndTime} />
+                  </div>
+                )}
+              </div>
+            </div>
+            {!allDay && (
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="일정 길이 빠르게 정하기">
+                {[30, 60, 90, 120, 180].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setLength(m)}
+                    aria-pressed={duration === m}
+                    className={`min-h-8 cursor-pointer rounded-full px-3 text-xs font-semibold transition active:scale-95 ${
+                      duration === m
+                        ? 'bg-brand text-white'
+                        : 'bg-field text-ink-muted ring-1 ring-line hover:bg-brand-soft hover:text-brand-ink'
+                    }`}
+                  >
+                    {formatDuration(m)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <Field label="색상">
+            <ColorPicker value={color} onChange={setColor} />
           </Field>
-          {!allDay && (
-            <Field label="종료 시간">
-              <input type="time" className="input" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
-            </Field>
-          )}
-        </div>
-        <Field label="색상">
-          <ColorPicker value={color} onChange={setColor} />
-        </Field>
-        <Field label="메모">
-          <textarea className="input min-h-20" value={description} onChange={(e) => setDescription(e.target.value)} />
-        </Field>
-        {error && <p className="alert-error">{error}</p>}
-      </form>
-    </Modal>
+          <Field label="메모">
+            <textarea className="input min-h-20" value={description} onChange={(e) => setDescription(e.target.value)} />
+          </Field>
+          {error && <p className="alert-error">{error}</p>}
+        </form>
+      </Modal>
     </>
   )
 }
