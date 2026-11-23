@@ -56,16 +56,24 @@ export const onRequestGet: Handler = async ({ env, request }) => {
     }),
   })
   if (!tokenRes.ok) {
-    console.error('token exchange failed', tokenRes.status)
+    // Google 오류 코드만 기록 (예: invalid_client = Client Secret 불일치, invalid_grant = 코드 만료/재사용)
+    const body = (await tokenRes.json().catch(() => ({}))) as { error?: string; error_description?: string }
+    console.error('token exchange failed', tokenRes.status, body.error, body.error_description)
     return fail('token')
   }
   const { id_token } = (await tokenRes.json()) as { id_token?: string }
-  if (!id_token) return fail('token')
+  if (!id_token) {
+    console.error('token response has no id_token')
+    return fail('token')
+  }
 
   // id_token은 TLS로 Google 토큰 엔드포인트에서 직접 받았으므로 서명 검증 없이 클레임만 확인 (OIDC Core 3.1.3.7)
   const claims = decodeJwtPayload(id_token)
   const validIssuer = claims.iss === 'https://accounts.google.com' || claims.iss === 'accounts.google.com'
-  if (!validIssuer || claims.aud !== env.GOOGLE_CLIENT_ID || claims.exp * 1000 < Date.now()) return fail('token')
+  if (!validIssuer || claims.aud !== env.GOOGLE_CLIENT_ID || claims.exp * 1000 < Date.now()) {
+    console.error('id_token claim check failed', { validIssuer, audMatches: claims.aud === env.GOOGLE_CLIENT_ID })
+    return fail('token')
+  }
   if (!claims.email_verified) return fail('unverified')
 
   // 선택: 특정 이메일만 허용하고 싶을 때 (비워두면 모든 구글 계정 허용)
