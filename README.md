@@ -58,7 +58,8 @@ public/_headers           정적 파일 보안 헤더 (CSP 등)
 - D1 바인딩 `DB`는 `wrangler.toml`에서 적용
 - 환경 변수(Secrets): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
   - 선택: `ALLOWED_EMAILS` (쉼표 구분) — 설정하면 해당 이메일만 로그인 허용
-- 스키마 변경: `migrations/000N_xxx.sql` 추가 후 `npm run db:migrate:remote`
+- 미리보기 배포(`main` 이외 브랜치)는 운영 DB가 아닌 `planner-db-preview`를 사용 (`wrangler.toml`의 `[env.preview]`)
+- 스키마 변경: `migrations/000N_xxx.sql` 추가 후 `npm run db:migrate:remote` **와** `npm run db:migrate:preview`
 
 ## 보안
 

@@ -7,3 +7,11 @@ binding = "DB"
 database_name = "planner-db"
 database_id = "8c57a1af-9ee4-4dd7-b262-772099ac0af3"
 migrations_dir = "migrations"
+
+# 미리보기 배포(main 이외 브랜치, Dependabot PR 등)는 운영 DB 대신 별도 DB 사용
+[env.preview]
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "planner-db-preview"
+database_id = "f57ca6aa-8c21-47cd-a93a-a73b30b91791"
+migrations_dir = "migrations"
