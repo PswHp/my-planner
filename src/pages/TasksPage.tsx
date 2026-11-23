@@ -1,5 +1,6 @@
 import { addDays } from 'date-fns'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
 import { api, type Task } from '../lib/api'
@@ -231,19 +232,29 @@ function TaskModal({ task, onClose, onSaved }: { task: Task; onClose: () => void
     }
   }
 
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+
   const remove = async () => {
-    if (!confirm('이 할 일을 삭제할까요?')) return
     await api.del(`/tasks/${task.id}`)
     onSaved()
   }
 
   return (
+    <>
+    {confirmingDelete && (
+      <ConfirmDialog
+        title="이 할 일을 삭제할까요?"
+        message={title.trim() || task.title}
+        onConfirm={remove}
+        onCancel={() => setConfirmingDelete(false)}
+      />
+    )}
     <Modal
       title="할 일 수정"
       onClose={onClose}
       footer={
         <>
-          <button type="button" className="btn-danger" onClick={remove}>
+          <button type="button" className="btn-danger" onClick={() => setConfirmingDelete(true)}>
             삭제
           </button>
           <button type="button" className="btn-ghost ml-auto" onClick={onClose}>
@@ -279,5 +290,6 @@ function TaskModal({ task, onClose, onSaved }: { task: Task; onClose: () => void
         {error && <p className="text-sm text-[#b42f2f]">{error}</p>}
       </form>
     </Modal>
+    </>
   )
 }
