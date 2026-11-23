@@ -41,7 +41,7 @@ export function ConfirmDialog({ title, message, confirmLabel = '삭제', onConfi
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex animate-fade-in items-center justify-center bg-ink/40 p-4"
+      className="fixed inset-0 z-[60] flex animate-fade-in items-center justify-center bg-scrim/45 p-4"
       onMouseDown={(e) => e.target === e.currentTarget && !busy && onCancel()}
     >
       <div

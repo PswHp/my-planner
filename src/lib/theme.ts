@@ -3,6 +3,8 @@
  * 선택한 테마는 이 기기(브라우저)에만 저장됩니다 (서버/DB 저장 없음).
  * 테마를 추가하려면: ① index.css에 색 블록 추가 ② 아래 THEMES에 항목 추가
  */
+import { syncThemeColor } from './mode'
+
 export const THEMES = [
   { id: 'forest', label: '숲', desc: '차분한 초록', swatch: ['#6bb16d', '#e4f2dc', '#4e7c59'], bg: '#f7f8f3' },
   { id: 'sky', label: '하늘', desc: '맑은 파랑', swatch: ['#6aa5dc', '#e1edf9', '#3a6ea5'], bg: '#f4f7fa' },
@@ -31,8 +33,7 @@ export function applyTheme(id: ThemeId, save = true) {
   const root = document.documentElement
   if (id === DEFAULT) delete root.dataset.theme
   else root.dataset.theme = id
-  const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-  if (meta) meta.content = THEMES.find((t) => t.id === id)!.bg
+  syncThemeColor()
   if (!save) return
   try {
     localStorage.setItem(KEY, id)

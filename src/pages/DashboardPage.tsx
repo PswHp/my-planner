@@ -254,8 +254,8 @@ function PetCard({ className = '' }: { className?: string }) {
     <section className={`card flex gap-3 p-3 sm:gap-4 ${className}`} aria-label="나의 동물 (미리보기)">
       {/* 장면 */}
       <div className="relative min-h-[210px] w-[42%] shrink-0 overflow-hidden rounded-[14px] bg-gradient-to-b from-sky to-sky-end sm:min-h-[236px] sm:w-[46%]">
-        <PixelArt sprite={CLOUD} scale={3} className="absolute top-4 left-[18%] opacity-90" />
-        <PixelArt sprite={CLOUD} scale={2} className="absolute top-9 right-[12%] opacity-80" />
+        <PixelArt sprite={CLOUD} scale={3} className="dark:!opacity-25 absolute top-4 left-[18%] opacity-90" />
+        <PixelArt sprite={CLOUD} scale={2} className="dark:!opacity-20 absolute top-9 right-[12%] opacity-80" />
         <PixelArt sprite={TREE} scale={4} className="absolute bottom-[14px] -left-5 h-auto w-16 sm:-left-4 sm:w-24" />
         <PixelArt sprite={TREE} scale={3} className="absolute right-[-12px] bottom-[14px] hidden h-auto w-[72px] sm:block" />
         <PixelArt sprite={BUSH} scale={3} className="absolute right-[22%] bottom-[14px]" />
@@ -443,7 +443,7 @@ function MiniCalendar({
               aria-pressed={isSel}
               className={`relative mx-auto my-0.5 grid h-9 w-9 place-items-center rounded-full text-sm transition ${
                 isSel
-                  ? 'bg-brand font-bold text-white shadow-raised'
+                  ? 'bg-brand font-bold text-on-brand shadow-raised'
                   : isToday
                     ? 'font-bold text-brand-ink ring-2 ring-brand-accent ring-inset hover:bg-brand-soft'
                     : `font-medium hover:bg-surface-hover ${i % 7 === 0 ? 'text-sunday' : 'text-ink'}`
@@ -451,7 +451,7 @@ function MiniCalendar({
             >
               {d.getDate()}
               {busyDays.has(ds) && (
-                <span className={`absolute bottom-1 h-1 w-1 rounded-full ${isSel ? 'bg-white' : 'bg-brand-accent'}`} aria-hidden="true" />
+                <span className={`absolute bottom-1 h-1 w-1 rounded-full ${isSel ? 'bg-on-brand' : 'bg-brand-accent'}`} aria-hidden="true" />
               )}
             </button>
           )
@@ -514,7 +514,7 @@ function TodaySchedule({
                   onClick={() => onOpen(e)}
                   className={`min-h-10 min-w-0 flex-1 truncate rounded-[10px] px-3 text-left text-sm font-medium transition hover:brightness-[0.97] ${past ? 'opacity-70' : ''}`}
                   style={{
-                    background: `color-mix(in oklab, ${COLOR_HEX[e.color]} 17%, white)`,
+                    background: `color-mix(in oklab, ${COLOR_HEX[e.color]} 17%, var(--color-field))`,
                   }}
                 >
                   {e.title || '제목 없음'}

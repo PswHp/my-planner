@@ -214,10 +214,10 @@ function BarChart({ data, format }: { data: { date: string; value: number }[]; f
             ))}
             {hover !== null && (
               <div
-                className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-ink px-2.5 py-1.5 text-xs whitespace-nowrap text-white shadow-pop"
+                className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-inverse px-2.5 py-1.5 text-xs whitespace-nowrap text-on-inverse shadow-pop"
                 style={{ left: `${((hover + 0.5) / data.length) * 100}%` }}
               >
-                <div className="text-white/70">{fmt(parseDate(data[hover].date), 'M월 d일 (EEE)')}</div>
+                <div className="text-on-inverse/70">{fmt(parseDate(data[hover].date), 'M월 d일 (EEE)')}</div>
                 <div className="font-semibold">{format(data[hover].value)}</div>
               </div>
             )}

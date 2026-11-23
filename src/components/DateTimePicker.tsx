@@ -54,7 +54,7 @@ function PickerSheet({
   // body에 직접 그려서 <label> 안에서 열려도 클릭이 입력 버튼으로 다시 전달되지 않게 함
   return createPortal(
     <div
-      className="fixed inset-0 z-[60] flex animate-fade-in items-end justify-center bg-ink/30 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[60] flex animate-fade-in items-end justify-center bg-scrim/35 sm:items-center sm:p-4"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -229,7 +229,7 @@ function DatePickerDialog({
               aria-pressed={isSel}
               className={`mx-auto my-0.5 grid h-10 w-10 place-items-center rounded-full text-sm transition disabled:cursor-not-allowed disabled:opacity-30 ${
                 isSel
-                  ? 'bg-brand font-bold text-white shadow-raised'
+                  ? 'bg-brand font-bold text-on-brand shadow-raised'
                   : isToday
                     ? 'font-bold text-brand-ink ring-2 ring-brand-accent ring-inset hover:bg-brand-soft'
                     : `font-medium hover:bg-surface-hover ${i % 7 === 0 ? 'text-sunday' : 'text-ink'}`
@@ -259,7 +259,7 @@ function DatePickerDialog({
             onClick={() => onPick('')}
             aria-pressed={!value}
             className={`ml-auto min-h-9 cursor-pointer rounded-full px-3.5 text-xs font-semibold transition ${
-              value ? 'text-ink-muted ring-1 ring-line hover:bg-surface-hover' : 'bg-brand text-white'
+              value ? 'text-ink-muted ring-1 ring-line hover:bg-surface-hover' : 'bg-brand text-on-brand'
             }`}
           >
             {clearLabel}
@@ -333,7 +333,7 @@ function TimePickerDialog({
   const cell = (on: boolean) =>
     `grid h-10 cursor-pointer place-items-center rounded-control text-sm tabular-nums transition active:scale-95 ${
       on
-        ? 'bg-brand font-bold text-white shadow-raised'
+        ? 'bg-brand font-bold text-on-brand shadow-raised'
         : 'bg-field font-medium text-ink ring-1 ring-line hover:bg-brand-soft hover:ring-brand-light'
     }`
 

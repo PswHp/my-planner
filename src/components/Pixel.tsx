@@ -224,7 +224,7 @@ export function Logo({ compact = false, subtitle = false }: { compact?: boolean;
   return (
     <span className="flex min-w-0 items-center gap-2.5">
       {/* 로고 이미지 — 파비콘과 같은 파일 (public/favicon-192.png) */}
-      <img src="/favicon-192.png" alt="" width={44} height={44} className="h-11 w-11 shrink-0 object-contain" />
+      <img src="/favicon-192.png" alt="" width={44} height={44} className={`${compact ? 'h-8 w-8' : 'h-11 w-11'} shrink-0 object-contain`} />
 
       {!compact && (
         <span className="min-w-0 leading-tight">

@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* 다크 모드 전용 스타일이 필요할 때: dark:opacity-50 처럼 사용 */
+@custom-variant dark (&:where([data-mode='dark'], [data-mode='dark'] *));
+
 /* ==========================================================================
    디자인 토큰 — Soft Minimal Game UI (Dailumi)
    색/둥글기/그림자는 모두 여기서만 정의합니다.
@@ -44,12 +47,19 @@
   --color-brand-light: #a8d5a2;
   --color-brand-soft: #e4f2dc;
   --color-brand-ink: #2f6b3f;
+  --color-on-brand: #ffffff; /* brand 배경 위 글자 */
+
+  /* 반전 색 (툴팁, 선택된 칩) · 화면 가림막 */
+  --color-inverse: #2b332d;
+  --color-on-inverse: #ffffff;
+  --color-scrim: #1d2420;
 
   /* 상태 색 */
   --color-danger: #c2413a;
   --color-danger-hover: #a63630;
   --color-danger-soft: #fbebe8;
   --color-danger-line: #f1c8c3;
+  --color-on-danger: #ffffff;
   --color-warning: #8a5a00;
   --color-warning-soft: #fdf1d6;
   --color-sunday: #d0463f;
@@ -189,6 +199,128 @@
 }
 
 /* ==========================================================================
+   다크 모드 — <html data-mode="dark">
+   순수 검정 대신 차분한 어두운 녹회색. 테마 색(data-theme)과 함께 쓸 수 있습니다.
+   ========================================================================== */
+:root[data-mode='dark'] {
+  color-scheme: dark;
+  --color-bg: #151b17;
+  --color-surface: #1d2420;
+  --color-field: #232b26;
+  --color-sidebar: #19201c;
+  --color-surface-muted: #232b26;
+  --color-surface-hover: #2a332d;
+  --color-surface-sunken: #111612;
+  --color-sky: #1c2a36; /* 밤하늘 */
+  --color-sky-end: #22312a;
+  --color-ink: #e7ece6;
+  --color-ink-muted: #b3bdb4;
+  --color-ink-subtle: #98a39a;
+  --color-line: #2e3832;
+  --color-line-strong: #3d4a42;
+  --color-on-brand: #14201a;
+  --color-inverse: #e7ece6;
+  --color-on-inverse: #151b17;
+  --color-scrim: #000000;
+  --color-danger: #f08a82;
+  --color-danger-hover: #f4a29b;
+  --color-danger-soft: #3a1f1d;
+  --color-danger-line: #5a2c29;
+  --color-on-danger: #2a0f0d;
+  --color-warning: #e8b75a;
+  --color-warning-soft: #3a2f17;
+  --color-sunday: #f0857e;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 14px -6px rgb(0 0 0 / 0.4);
+  --shadow-raised: 0 2px 6px rgb(0 0 0 / 0.35), 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-pop: 0 18px 44px -12px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.35);
+  /* 숲 (기본) */
+  --color-brand: #7cc285;
+  --color-brand-hover: #94cf9b;
+  --color-brand-accent: #6bb16d;
+  --color-brand-light: #3e6b47;
+  --color-brand-soft: #24372a;
+  --color-brand-ink: #a6dcac;
+}
+:root[data-mode='dark'][data-theme='sky'] {
+  --color-brand: #7fb4e6;
+  --color-brand-hover: #98c4ee;
+  --color-brand-accent: #6aa5dc;
+  --color-brand-light: #2f4c6b;
+  --color-brand-soft: #1f2e3d;
+  --color-brand-ink: #a9cdf0;
+}
+:root[data-mode='dark'][data-theme='lavender'] {
+  --color-brand: #b2a3ec;
+  --color-brand-hover: #c3b7f1;
+  --color-brand-accent: #9b8ad8;
+  --color-brand-light: #4a4170;
+  --color-brand-soft: #2a2640;
+  --color-brand-ink: #cdc2f5;
+}
+:root[data-mode='dark'][data-theme='peach'] {
+  --color-brand: #f2a18b;
+  --color-brand-hover: #f5b4a2;
+  --color-brand-accent: #f0927a;
+  --color-brand-light: #6b3b30;
+  --color-brand-soft: #3a2620;
+  --color-brand-ink: #f7c2b3;
+}
+:root[data-mode='dark'][data-theme='mono'] {
+  --color-brand: #c3c8cd;
+  --color-brand-hover: #d4d8dc;
+  --color-brand-accent: #8a9096;
+  --color-brand-light: #4a4f54;
+  --color-brand-soft: #2b2f33;
+  --color-brand-ink: #dde1e4;
+}
+
+/* ==========================================================================
+   라이트 ↔ 다크 원형 전환 (View Transitions API)
+   - 라이트 → 다크: 라이트 화면(이전)이 가운데로 원을 그리며 줄어듦
+   - 다크 → 라이트: 라이트 화면(새)이 가운데에서 원으로 커짐
+   ========================================================================== */
+/* 전환 중에는 화면 위로 드래그해도 글자가 선택되지 않게 */
+:root[data-vt] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+:root[data-vt='to-dark']::view-transition-old(root) {
+  z-index: 2;
+  animation: vt-shrink 720ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+:root[data-vt='to-dark']::view-transition-new(root) {
+  z-index: 1;
+}
+:root[data-vt='to-light']::view-transition-new(root) {
+  z-index: 2;
+  animation: vt-grow 720ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+:root[data-vt='to-light']::view-transition-old(root) {
+  z-index: 1;
+}
+@keyframes vt-shrink {
+  from {
+    clip-path: circle(75vmax at 50% 50%);
+  }
+  to {
+    clip-path: circle(0px at 50% 50%);
+  }
+}
+@keyframes vt-grow {
+  from {
+    clip-path: circle(0px at 50% 50%);
+  }
+  to {
+    clip-path: circle(75vmax at 50% 50%);
+  }
+}
+
+/* ==========================================================================
    기본 스타일
    ========================================================================== */
 @layer base {
@@ -240,7 +372,7 @@
     @apply inline-flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-control px-4 py-2 text-sm font-medium whitespace-nowrap transition duration-150 select-none active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45;
   }
   .btn-primary {
-    @apply bg-brand text-white shadow-card hover:bg-brand-hover;
+    @apply bg-brand text-on-brand shadow-card hover:bg-brand-hover;
   }
   .btn-secondary {
     @apply border border-line-strong bg-field text-ink hover:border-brand-light hover:bg-surface-hover;
@@ -252,7 +384,7 @@
     @apply text-danger hover:bg-danger-soft;
   }
   .btn-danger-solid {
-    @apply bg-danger text-white shadow-card hover:bg-danger-hover;
+    @apply bg-danger text-on-danger shadow-card hover:bg-danger-hover;
   }
   /* 크기 · 형태 보조 */
   .btn-sm {

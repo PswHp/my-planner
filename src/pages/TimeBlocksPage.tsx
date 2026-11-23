@@ -380,7 +380,7 @@ function BlockModal({
                 onClick={() => setCategory(c)}
                 aria-pressed={category === c}
                 className={`flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition duration-150 ${
-                  category === c ? 'border-ink bg-ink text-white' : 'border-line hover:bg-surface-hover'
+                  category === c ? 'border-inverse bg-inverse text-on-inverse' : 'border-line hover:bg-surface-hover'
                 }`}
               >
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLOR_HEX[CATEGORY_INFO[c].color] }} />

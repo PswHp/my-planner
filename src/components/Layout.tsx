@@ -15,11 +15,15 @@ import {
   GridIcon,
   HomeIcon,
   LogoutIcon,
+  MoonIcon,
+  SunIcon,
   PawIcon,
   TrophyIcon,
   UserIcon,
 } from './Icons'
 import { GRASS, Logo, PixelStrip } from './Pixel'
+import { PullCord } from './PullCord'
+import { switchMode, useMode } from '../lib/mode'
 
 /**
  * 내비게이션 메뉴 정의 — 메뉴를 추가/변경할 때는 이 배열만 수정하면
@@ -119,9 +123,12 @@ function Sidebar({ user }: { user: User }) {
   return (
     <aside className="sticky top-0 hidden h-dvh w-[72px] shrink-0 flex-col overflow-hidden border-r border-line bg-sidebar md:flex lg:w-60">
       {/* 상단: 로고 */}
+      {/* 다크 모드 전환 줄 — 사이드바 위쪽 오른편 */}
+      <PullCord className="right-0 lg:right-3" />
+
       <Link
         to="/dashboard"
-        className="mx-3 mt-5 mb-6 flex items-center rounded-control p-1 transition hover:bg-surface-hover lg:mx-4 lg:p-1.5"
+        className="mt-6 mr-[32px] mb-6 ml-1.5 flex items-center rounded-control p-px transition hover:bg-surface-hover lg:mt-5 lg:mr-11 lg:ml-4 lg:p-1.5"
         aria-label={`${SITE.name} 홈`}
       >
         <span className="lg:hidden">
@@ -252,7 +259,7 @@ function MobileMenu({ user, onClose, onLogout }: { user: User; onClose: () => vo
 
   return (
     <div
-      className="fixed inset-0 z-50 flex animate-fade-in items-end bg-ink/30 md:hidden"
+      className="fixed inset-0 z-50 flex animate-fade-in items-end bg-scrim/35 md:hidden"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -275,6 +282,8 @@ function MobileMenu({ user, onClose, onLogout }: { user: User; onClose: () => vo
           </span>
           <ChevronRight />
         </Link>
+
+        <ModeSwitchRow />
 
         <div className="space-y-0.5">
           {NAV.filter((n) => !n.tab).map((n) => (
@@ -325,6 +334,33 @@ function MobileMenu({ user, onClose, onLogout }: { user: User; onClose: () => vo
         </div>
       </div>
     </div>
+  )
+}
+
+/** 모바일 전체 메뉴의 다크 모드 스위치 */
+function ModeSwitchRow() {
+  const dark = useMode() === 'dark'
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={dark}
+      onClick={() => switchMode()}
+      className="mb-1 flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-control px-3 text-sm font-medium text-ink transition hover:bg-surface-hover"
+    >
+      <span className="text-brand" aria-hidden="true">
+        {dark ? <MoonIcon /> : <SunIcon />}
+      </span>
+      다크 모드
+      <span
+        className={`relative ml-auto h-7 w-12 shrink-0 rounded-full transition-colors duration-200 ${dark ? 'bg-brand' : 'bg-surface-sunken ring-1 ring-line-strong'}`}
+        aria-hidden="true"
+      >
+        <span
+          className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-field shadow-raised transition-transform duration-200 ${dark ? 'translate-x-5' : ''}`}
+        />
+      </span>
+    </button>
   )
 }
 

@@ -18,8 +18,8 @@ export default function LoginPage() {
     <div className="grid min-h-dvh place-items-center px-4 py-10">
       <div className="card w-full max-w-sm animate-pop-in overflow-hidden p-0 text-center shadow-raised">
         <div className="relative h-36 bg-gradient-to-b from-sky to-sky-end">
-          <PixelArt sprite={CLOUD} scale={3} className="absolute top-5 left-8 opacity-90" />
-          <PixelArt sprite={CLOUD} scale={2} className="absolute top-10 right-10 opacity-80" />
+          <PixelArt sprite={CLOUD} scale={3} className="dark:!opacity-25 absolute top-5 left-8 opacity-90" />
+          <PixelArt sprite={CLOUD} scale={2} className="dark:!opacity-20 absolute top-10 right-10 opacity-80" />
           <PixelArt sprite={TREE} scale={4} className="absolute bottom-[14px] -left-3" />
           <PixelArt sprite={TREE} scale={3} className="absolute right-0 bottom-[14px]" />
           <PixelArt sprite={FLOWER} scale={2} className="absolute bottom-[16px] left-[30%]" />

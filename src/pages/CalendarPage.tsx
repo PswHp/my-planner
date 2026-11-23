@@ -156,7 +156,7 @@ export default function CalendarPage() {
                   <div className="flex items-center justify-between">
                     <span
                       className={`grid h-6 w-6 place-items-center rounded-full text-xs font-semibold ${
-                        isToday ? 'bg-brand text-white' : isSelected ? 'text-brand-ink' : 'text-ink'
+                        isToday ? 'bg-brand text-on-brand' : isSelected ? 'text-brand-ink' : 'text-ink'
                       }`}
                     >
                       {d.getDate()}
@@ -482,7 +482,7 @@ export function EventModal({
                     aria-pressed={duration === m}
                     className={`min-h-8 cursor-pointer rounded-full px-3 text-xs font-semibold transition active:scale-95 ${
                       duration === m
-                        ? 'bg-brand text-white'
+                        ? 'bg-brand text-on-brand'
                         : 'bg-field text-ink-muted ring-1 ring-line hover:bg-brand-soft hover:text-brand-ink'
                     }`}
                   >
