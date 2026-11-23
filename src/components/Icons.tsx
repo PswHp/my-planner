@@ -147,3 +147,8 @@ export const PencilIcon = () => (
     <path d="m4 20 1-4L16 5l3 3L8 19z" />
   </svg>
 )
+export const MinusIcon = () => (
+  <svg {...base}>
+    <path d="M5 12h14" />
+  </svg>
+)

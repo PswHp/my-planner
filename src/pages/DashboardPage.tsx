@@ -10,6 +10,7 @@ import {
   ClipboardIcon,
   HeartIcon,
   InfoIcon,
+  MinusIcon,
   PencilIcon,
   PlusIcon,
   ShirtIcon,
@@ -397,10 +398,10 @@ function TodayTasks({
         <button
           className="btn-ghost btn-icon btn-sm -mr-1.5 min-h-8 rounded-full"
           onClick={() => setAdding((a) => !a)}
-          aria-label="할 일 추가"
+          aria-label={adding ? '입력창 닫기' : '할 일 추가'}
           aria-expanded={adding}
         >
-          <PlusIcon />
+          {adding ? <MinusIcon /> : <PlusIcon />}
         </button>
       </h2>
 

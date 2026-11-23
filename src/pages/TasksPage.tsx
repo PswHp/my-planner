@@ -7,12 +7,11 @@ import { Field, Modal } from '../components/Modal'
 import { api, type Task } from '../lib/api'
 import { fmt, parseDate, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
 
-type Filter = 'active' | 'today' | 'done' | 'all'
+type Filter = 'all' | 'active' | 'done'
 const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'active', label: '진행 중' },
-  { key: 'today', label: '오늘' },
-  { key: 'done', label: '완료' },
   { key: 'all', label: '전체' },
+  { key: 'active', label: '진행 중' },
+  { key: 'done', label: '완료' },
 ]
 
 const PRIORITY: Record<number, { label: string; className: string }> = {
@@ -57,7 +56,6 @@ export default function TasksPage() {
     const visible = tasks.filter((t) => {
       if (filter === 'active') return !t.done
       if (filter === 'done') return !!t.done
-      if (filter === 'today') return t.due_date === today || (!t.done && !!t.due_date && t.due_date < today)
       return true
     })
     if (filter === 'done') {
