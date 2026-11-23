@@ -65,25 +65,10 @@ export default function DashboardPage({ user }: { user: User }) {
     if (!isSameMonth(date, month)) setMonth(startOfMonth(date))
   }
 
-  const toggleTask = async (t: Task) => {
-    const done = !t.done
-    const completed_at = done ? toDateTimeStr(new Date()) : null
-    setTasks((ts) => ts.map((x) => (x.id === t.id ? { ...x, done: done ? 1 : 0, completed_at } : x)))
-    try {
-      await api.patch(`/tasks/${t.id}`, { done, completed_at })
-    } catch (e) {
-      setError((e as Error).message)
-      load()
-    }
-  }
-
-  // 선택한 날의 할 일 (오늘이면 기한 지난 미완료 할 일도 함께) — 캘린더 페이지와 같은 규칙
+  // 선택한 날이 마감인 할 일만 (기한 지난 할 일은 대시보드에 표시하지 않음)
   const dayTasks = useMemo(
-    () =>
-      tasks
-        .filter((t) => t.due_date === selected || (selected === today && !t.done && !!t.due_date && t.due_date < today))
-        .sort((a, b) => a.done - b.done || (a.due_date ?? '').localeCompare(b.due_date ?? '') || b.priority - a.priority),
-    [tasks, selected, today],
+    () => tasks.filter((t) => t.due_date === selected).sort((a, b) => a.done - b.done || b.priority - a.priority),
+    [tasks, selected],
   )
 
   // 선택한 날의 일정 (여러 날 일정 포함)
@@ -157,7 +142,6 @@ export default function DashboardPage({ user }: { user: User }) {
           date={selected}
           today={today}
           tasks={dayTasks}
-          onToggle={toggleTask}
         />
 
         <MiniCalendar
@@ -347,13 +331,11 @@ function TodayTasks({
   date,
   today,
   tasks,
-  onToggle,
 }: {
   className?: string
   date: string
   today: string
   tasks: Task[]
-  onToggle: (t: Task) => void
 }) {
   const done = tasks.filter((t) => t.done).length
   const label = date === today ? '오늘의 할 일' : `${fmt(parseDate(date), 'M월 d일')} 할 일`
@@ -373,23 +355,18 @@ function TodayTasks({
       ) : (
         <ul className="-mx-1.5 max-h-72 space-y-1 overflow-y-auto px-1.5">
           {tasks.map((t) => (
-            <li key={t.id}>
-              <label
-                className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-[10px] border px-3 py-2 text-sm transition ${
-                  t.done ? 'border-transparent bg-transparent' : 'border-line bg-field hover:border-brand-light'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  className="h-[18px] w-[18px] shrink-0 cursor-pointer"
-                  checked={!!t.done}
-                  onChange={() => onToggle(t)}
-                />
-                <span className={`min-w-0 flex-1 truncate ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
-                {!t.done && t.due_date && t.due_date < date && (
-                  <span className="shrink-0 rounded-full bg-danger-soft px-2 py-0.5 text-[11px] font-semibold text-danger">기한 지남</span>
-                )}
-              </label>
+            <li
+              key={t.id}
+              className={`flex min-h-11 items-center gap-3 rounded-[10px] border px-3 py-2 text-sm ${
+                t.done ? 'border-transparent' : 'border-line bg-field'
+              }`}
+            >
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${t.done ? 'bg-line-strong' : 'bg-brand-accent'}`}
+                aria-hidden="true"
+              />
+              <span className={`min-w-0 flex-1 truncate ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
+              {t.done ? <span className="sr-only">(완료)</span> : null}
             </li>
           ))}
         </ul>
