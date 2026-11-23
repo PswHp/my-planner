@@ -223,9 +223,9 @@ export const GRASS: Sprite = {
 export function Logo({ compact = false, subtitle = false }: { compact?: boolean; subtitle?: boolean }) {
   return (
     <span className="flex min-w-0 items-center gap-2.5">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] bg-surface-muted ring-1 ring-line">
-        <PixelArt sprite={PAW} scale={2.2} />
-      </span>
+      {/* 로고 이미지 — 파비콘과 같은 파일 (public/favicon-192.png) */}
+      <img src="/favicon-192.png" alt="" width={44} height={44} className="h-11 w-11 shrink-0 object-contain" />
+
       {!compact && (
         <span className="min-w-0 leading-tight">
           <span className="block text-[19px] font-extrabold tracking-tight text-brand">Dailumi</span>
