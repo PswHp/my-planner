@@ -1,0 +1,43 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Pretendard', ui-sans-serif, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+
+  /* 카테고리/일정 색 (dataviz 기본 범주형 팔레트, 순서 고정) */
+  --color-c-blue: #2a78d6;
+  --color-c-orange: #eb6834;
+  --color-c-aqua: #1baf7a;
+  --color-c-yellow: #eda100;
+  --color-c-magenta: #e87ba4;
+  --color-c-green: #008300;
+  --color-c-violet: #6250d6;
+  --color-c-red: #e34948;
+}
+
+html,
+body {
+  background: #f7f7f5;
+  color: #1c1c1a;
+}
+
+/* 입력 요소 공통 */
+.input {
+  @apply w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-c-blue focus:ring-2 focus:ring-c-blue/20;
+}
+.btn-primary,
+.btn-ghost,
+.btn-danger {
+  @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition disabled:cursor-default disabled:opacity-50;
+}
+.btn-primary {
+  @apply bg-c-blue text-white hover:bg-[#256abf];
+}
+.btn-ghost {
+  @apply text-stone-600 hover:bg-stone-200/70;
+}
+.btn-danger {
+  @apply text-c-red hover:bg-red-50;
+}
+.card {
+  @apply rounded-2xl border border-stone-200 bg-white;
+}
