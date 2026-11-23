@@ -95,65 +95,75 @@ export default function CalendarPage() {
   return (
     <div>
       <PageHeader title={fmt(month, 'yyyy년 M월')}>
-        <button className="btn-ghost px-2" onClick={() => setMonth(addMonths(month, -1))} aria-label="이전 달">
-          <ChevronLeft />
-        </button>
-        <button
-          className="btn-ghost"
-          onClick={() => {
-            setMonth(startOfMonth(new Date()))
-            setSelected(todayStr())
-          }}
-        >
-          오늘
-        </button>
-        <button className="btn-ghost px-2" onClick={() => setMonth(addMonths(month, 1))} aria-label="다음 달">
-          <ChevronRight />
-        </button>
+        <div className="flex items-center rounded-control border border-line bg-surface p-0.5 shadow-card">
+          <button className="btn-ghost btn-icon min-h-9" onClick={() => setMonth(addMonths(month, -1))} aria-label="이전 달">
+            <ChevronLeft />
+          </button>
+          <button
+            className="btn-ghost min-h-9 px-3"
+            onClick={() => {
+              setMonth(startOfMonth(new Date()))
+              setSelected(todayStr())
+            }}
+          >
+            오늘
+          </button>
+          <button className="btn-ghost btn-icon min-h-9" onClick={() => setMonth(addMonths(month, 1))} aria-label="다음 달">
+            <ChevronRight />
+          </button>
+        </div>
         <button className="btn-primary" onClick={() => openNew(selected)}>
           <PlusIcon /> 일정
         </button>
       </PageHeader>
 
-      {error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-[#b42f2f]">{error}</p>}
+      {error && <p className="alert-error mb-4">{error}</p>}
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
+      <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         {/* 월간 그리드 */}
-        <div className="card overflow-hidden">
-          <div className="grid grid-cols-7 border-b border-stone-100 text-center text-xs font-medium text-stone-500">
+        <div className="card self-start overflow-hidden">
+          <div className="grid grid-cols-7 border-b border-line bg-surface-muted text-center text-xs font-semibold text-ink-muted">
             {WEEKDAYS.map((w, i) => (
-              <div key={w} className={`py-2 ${i === 0 ? 'text-[#c23b3b]' : i === 6 ? 'text-[#1c5cab]' : ''}`}>
+              <div key={w} className={`py-2.5 ${i === 0 ? 'text-danger' : i === 6 ? 'text-c-blue' : ''}`}>
                 {w}
               </div>
             ))}
           </div>
           <div className="grid grid-cols-7">
-            {days.map((d) => {
+            {days.map((d, idx) => {
               const ds = toDateStr(d)
               const items = byDay.get(ds)
               const shown = items?.events.slice(0, 3) ?? []
               const more = (items?.events.length ?? 0) - shown.length
               const dueCount = items?.tasks.filter((t) => !t.done).length ?? 0
               const isSelected = ds === selected
+              const isToday = ds === today
               return (
                 <button
                   key={ds}
                   onClick={() => setSelected(ds)}
                   onDoubleClick={() => openNew(ds)}
-                  className={`flex min-h-20 cursor-pointer flex-col gap-0.5 border-r border-b border-stone-100 p-1 text-left transition md:min-h-28 md:p-1.5 ${
-                    isSelected ? 'bg-c-blue/5' : 'hover:bg-stone-50'
-                  } ${isSameMonth(d, month) ? '' : 'opacity-40'}`}
+                  aria-pressed={isSelected}
+                  aria-label={`${fmt(d, 'M월 d일 EEEE')}${items?.events.length ? `, 일정 ${items.events.length}개` : ''}${dueCount ? `, 할 일 ${dueCount}개` : ''}`}
+                  className={`relative flex min-h-[72px] cursor-pointer flex-col gap-0.5 border-b border-line p-1 text-left transition duration-150 md:min-h-28 md:p-1.5 ${
+                    (idx + 1) % 7 ? 'border-r' : ''
+                  } ${isSelected ? 'bg-brand-soft/70 shadow-[inset_0_0_0_2px_var(--color-brand)]' : 'hover:bg-surface-hover'} ${
+                    isSameMonth(d, month) ? '' : 'opacity-40'
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <span
-                      className={`grid h-6 w-6 place-items-center rounded-full text-xs font-medium ${
-                        ds === today ? 'bg-c-blue text-white' : isSelected ? 'text-[#1c5cab]' : ''
+                      className={`grid h-6 w-6 place-items-center rounded-full text-xs font-semibold ${
+                        isToday ? 'bg-brand text-white' : isSelected ? 'text-brand-ink' : 'text-ink'
                       }`}
                     >
                       {d.getDate()}
                     </span>
                     {dueCount > 0 && (
-                      <span className="rounded bg-stone-100 px-1 text-[10px] text-stone-600" title={`마감 할 일 ${dueCount}개`}>
+                      <span
+                        className="flex items-center gap-0.5 rounded-full bg-brand-soft px-1.5 text-[10px] font-semibold text-brand-ink"
+                        title={`마감 할 일 ${dueCount}개`}
+                      >
                         ✓{dueCount}
                       </span>
                     )}
@@ -161,14 +171,14 @@ export default function CalendarPage() {
                   {shown.map((ev) => (
                     <div
                       key={ev.id}
-                      className="truncate rounded px-1 py-px text-[11px] leading-4 font-medium text-white"
+                      className="truncate rounded-md px-1 py-px text-[11px] leading-4 font-medium text-white"
                       style={{ background: COLOR_HEX[ev.color] }}
                     >
                       <span className="hidden md:inline">{!ev.all_day && ev.start_at.slice(0, 10) === ds ? `${ev.start_at.slice(11)} ` : ''}</span>
                       {ev.title}
                     </div>
                   ))}
-                  {more > 0 && <div className="px-1 text-[10px] text-stone-500">+{more}개</div>}
+                  {more > 0 && <div className="px-1 text-[10px] text-ink-muted">+{more}개</div>}
                 </button>
               )
             })}
@@ -179,25 +189,27 @@ export default function CalendarPage() {
         <div className="h-fit space-y-4">
         <div className="card p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold">
-              {fmt(parseDate(selected), 'M월 d일 (EEE)')} <span className="text-sm font-normal text-stone-500">일정</span>
+            <h2 className="section-title">
+              {fmt(parseDate(selected), 'M월 d일 (EEE)')} <span className="text-sm font-normal text-ink-muted">일정</span>
             </h2>
-            <button className="btn-ghost px-2 py-1 text-xs" onClick={() => openNew(selected)}>
+            <button className="btn-ghost btn-sm" onClick={() => openNew(selected)}>
               <PlusIcon /> 추가
             </button>
           </div>
-          {selectedItems.events.length === 0 && <p className="py-4 text-center text-sm text-stone-400">일정이 없습니다</p>}
-          <ul className="space-y-2">
+          {selectedItems.events.length === 0 && (
+            <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">일정이 없습니다</p>
+          )}
+          <ul className="space-y-1">
             {selectedItems.events.map((ev) => (
               <li key={ev.id}>
                 <button
                   onClick={() => setEditing(ev)}
-                  className="flex w-full cursor-pointer gap-3 rounded-lg p-2 text-left hover:bg-stone-50"
+                  className="flex w-full cursor-pointer gap-3 rounded-control p-2.5 text-left transition hover:bg-surface-hover"
                 >
                   <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ background: COLOR_HEX[ev.color] }} />
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium">{ev.title}</span>
-                    <span className="block text-xs text-stone-500">{eventTimeLabel(ev)}</span>
+                    <span className="block text-xs text-ink-muted">{eventTimeLabel(ev)}</span>
                   </span>
                 </button>
               </li>
@@ -260,35 +272,37 @@ function DayTasks({
   return (
     <div className="card p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-semibold">
-          할 일 <span className="text-sm font-normal text-stone-500">{tasks.length ? `${openCount}/${tasks.length}` : ''}</span>
+        <h2 className="section-title">
+          할 일 <span className="text-sm font-normal text-ink-muted">{tasks.length ? `${openCount}/${tasks.length}` : ''}</span>
         </h2>
-        <Link to="/tasks" className="text-xs text-stone-500 hover:underline">
+        <Link to="/tasks" className="btn-ghost btn-sm">
           전체 보기
         </Link>
       </div>
 
-      {tasks.length === 0 && <p className="py-3 text-center text-sm text-stone-400">이 날 마감인 할 일이 없습니다</p>}
-      <ul className="space-y-1">
+      {tasks.length === 0 && (
+        <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">이 날 마감인 할 일이 없습니다</p>
+      )}
+      <ul className="space-y-0.5">
         {tasks.map((t) => {
           const overdue = !t.done && !!t.due_date && t.due_date < today
           return (
             <li key={t.id}>
-              <label className="flex cursor-pointer items-start gap-2.5 rounded-lg px-2 py-1.5 hover:bg-stone-50">
+              <label className="flex min-h-10 cursor-pointer items-start gap-2.5 rounded-control px-2 py-2 transition hover:bg-surface-hover">
                 <input
                   type="checkbox"
                   checked={!!t.done}
                   onChange={() => onToggle(t)}
-                  className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-c-blue"
+                  className="mt-0.5 h-[18px] w-[18px] shrink-0 cursor-pointer accent-brand"
                 />
                 <span className="min-w-0 flex-1">
-                  <span className={`block truncate text-sm ${t.done ? 'text-stone-400 line-through' : ''}`}>{t.title}</span>
+                  <span className={`block truncate text-sm ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
                   {overdue && (
-                    <span className="text-xs text-[#b42f2f]">기한 지남 · {fmt(parseDate(t.due_date!), 'M/d')}</span>
+                    <span className="text-xs text-danger">기한 지남 · {fmt(parseDate(t.due_date!), 'M/d')}</span>
                   )}
                 </span>
                 {t.priority === 3 && !t.done && (
-                  <span className="rounded bg-red-50 px-1.5 py-px text-[11px] font-medium text-[#b42f2f]">높음</span>
+                  <span className="rounded bg-danger-soft px-1.5 py-px text-[11px] font-medium text-danger">높음</span>
                 )}
               </label>
             </li>
@@ -296,15 +310,15 @@ function DayTasks({
         })}
       </ul>
 
-      <form onSubmit={add} className="mt-3 flex gap-2 border-t border-stone-100 pt-3">
+      <form onSubmit={add} className="mt-3 flex gap-2 border-t border-line pt-3">
         <input
-          className="input py-1.5"
+          className="input"
           placeholder={`${fmt(parseDate(date), 'M/d')} 할 일 추가…`}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           aria-label="할 일 추가"
         />
-        <button className="btn-primary shrink-0 py-1.5" disabled={busy || !title.trim()}>
+        <button className="btn-primary shrink-0" disabled={busy || !title.trim()}>
           추가
         </button>
       </form>
@@ -434,7 +448,7 @@ function EventModal({
         <Field label="메모">
           <textarea className="input min-h-20" value={description} onChange={(e) => setDescription(e.target.value)} />
         </Field>
-        {error && <p className="text-sm text-[#b42f2f]">{error}</p>}
+        {error && <p className="alert-error">{error}</p>}
       </form>
     </Modal>
     </>

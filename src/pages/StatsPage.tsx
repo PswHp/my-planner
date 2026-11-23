@@ -50,22 +50,16 @@ export default function StatsPage() {
   return (
     <div>
       <PageHeader title="통계">
-        <div className="flex gap-1 rounded-lg bg-stone-200/60 p-1 text-sm" role="tablist" aria-label="기간">
+        <div className="segmented" role="tablist" aria-label="기간">
           {RANGES.map((r) => (
-            <button
-              key={r.days}
-              role="tab"
-              aria-selected={days === r.days}
-              onClick={() => setDays(r.days)}
-              className={`cursor-pointer rounded-md px-3 py-1 font-medium transition ${days === r.days ? 'bg-white shadow-sm' : 'text-stone-600'}`}
-            >
+            <button key={r.days} role="tab" aria-selected={days === r.days} onClick={() => setDays(r.days)}>
               {r.label}
             </button>
           ))}
         </div>
       </PageHeader>
 
-      {error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-[#b42f2f]">{error}</p>}
+      {error && <p className="alert-error mb-4">{error}</p>}
 
       {stats && (
         <>
@@ -97,7 +91,7 @@ export default function StatsPage() {
           <div className="mt-5 grid gap-5 lg:grid-cols-2">
             <ChartCard title="카테고리별 시간">
               {stats.blocksByCategory.length === 0 ? (
-                <p className="py-10 text-center text-sm text-stone-400">이 기간에 타임 블록이 없습니다</p>
+                <p className="rounded-control bg-surface-muted py-10 text-center text-sm text-ink-subtle">이 기간에 타임 블록이 없습니다</p>
               ) : (
                 <ul className="space-y-3">
                   {stats.blocksByCategory.map((c) => {
@@ -107,12 +101,12 @@ export default function StatsPage() {
                     return (
                       <li key={c.category} title={`${info.label}: ${formatDuration(c.minutes)} (${pct.toFixed(0)}%)`}>
                         <div className="mb-1 flex justify-between text-sm">
-                          <span className="text-stone-700">{info.label}</span>
-                          <span className="text-stone-500 tabular-nums">
+                          <span className="text-ink">{info.label}</span>
+                          <span className="text-ink-muted tabular-nums">
                             {formatDuration(c.minutes)} · {pct.toFixed(0)}%
                           </span>
                         </div>
-                        <div className="h-2.5 rounded-full bg-stone-100">
+                        <div className="h-2.5 rounded-full bg-surface-sunken">
                           <div className="h-full rounded-full" style={{ width: `${(c.minutes / max) * 100}%`, background: COLOR_HEX[info.color] }} />
                         </div>
                       </li>
@@ -123,15 +117,15 @@ export default function StatsPage() {
             </ChartCard>
             <ChartCard title="요약">
               <dl className="grid grid-cols-2 gap-y-3 text-sm">
-                <dt className="text-stone-500">기간</dt>
+                <dt className="text-ink-muted">기간</dt>
                 <dd className="text-right">
                   {fmt(parseDate(from), 'M월 d일')} – {fmt(parseDate(today), 'M월 d일')}
                 </dd>
-                <dt className="text-stone-500">캘린더 일정</dt>
+                <dt className="text-ink-muted">캘린더 일정</dt>
                 <dd className="text-right tabular-nums">{stats.eventCount}개</dd>
-                <dt className="text-stone-500">가장 많이 완료한 날</dt>
+                <dt className="text-ink-muted">가장 많이 완료한 날</dt>
                 <dd className="text-right">{bestDay(completedSeries, (v) => `${v}개`)}</dd>
-                <dt className="text-stone-500">가장 많이 계획한 날</dt>
+                <dt className="text-ink-muted">가장 많이 계획한 날</dt>
                 <dd className="text-right">{bestDay(hoursSeries, (v) => formatDuration(Math.round(v * 60)))}</dd>
               </dl>
             </ChartCard>
@@ -150,10 +144,10 @@ function bestDay(series: { date: string; value: number }[], format: (v: number) 
 
 function StatTile({ label, value, sub, alert }: { label: string; value: string; sub: string; alert?: boolean }) {
   return (
-    <div className="card p-4">
-      <div className="text-xs font-medium text-stone-500">{label}</div>
-      <div className="mt-1 text-2xl font-bold tracking-tight tabular-nums">{value}</div>
-      <div className={`mt-1 text-xs ${alert ? 'font-medium text-[#b42f2f]' : 'text-stone-500'}`}>
+    <div className="card p-4 md:p-5">
+      <div className="text-xs font-semibold text-ink-muted">{label}</div>
+      <div className="mt-2 text-2xl font-bold tracking-tight tabular-nums md:text-[28px]">{value}</div>
+      <div className={`mt-1 text-xs ${alert ? 'font-medium text-danger' : 'text-ink-muted'}`}>
         {alert && '⚠ '}
         {sub}
       </div>
@@ -163,8 +157,8 @@ function StatTile({ label, value, sub, alert }: { label: string; value: string; 
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="card p-5">
-      <h2 className="mb-4 text-sm font-semibold">{title}</h2>
+    <section className="card p-5 md:p-6">
+      <h2 className="section-title mb-5">{title}</h2>
       {children}
     </section>
   )
@@ -180,13 +174,13 @@ function BarChart({ data, format }: { data: { date: string; value: number }[]; f
   const labelEvery = data.length <= 7 ? 1 : data.length <= 31 ? 5 : 15
   const H = 160
 
-  if (max === 0) return <p className="py-14 text-center text-sm text-stone-400">이 기간에 데이터가 없습니다</p>
+  if (max === 0) return <p className="rounded-control bg-surface-muted py-14 text-center text-sm text-ink-subtle">이 기간에 데이터가 없습니다</p>
 
   return (
     <div>
       <div className="flex gap-2">
         {/* y축 */}
-        <div className="relative w-10 shrink-0 text-right text-[11px] text-stone-400 tabular-nums" style={{ height: H }}>
+        <div className="relative w-10 shrink-0 text-right text-[11px] text-ink-subtle tabular-nums" style={{ height: H }}>
           {ticks.map((t) => (
             <span key={t} className="absolute right-0 -translate-y-1/2" style={{ top: H - (t / niceMax) * H }}>
               {Number.isInteger(t) ? t : t.toFixed(1)}
@@ -196,7 +190,7 @@ function BarChart({ data, format }: { data: { date: string; value: number }[]; f
         <div className="relative flex-1">
           {/* 격자선 */}
           {ticks.map((t) => (
-            <div key={t} className="absolute inset-x-0 border-t border-stone-100" style={{ top: H - (t / niceMax) * H }} />
+            <div key={t} className="absolute inset-x-0 border-t border-line" style={{ top: H - (t / niceMax) * H }} />
           ))}
           <div className="relative flex items-end" style={{ height: H, gap: 2 }} onMouseLeave={() => setHover(null)}>
             {data.map((d, i) => (
@@ -209,10 +203,10 @@ function BarChart({ data, format }: { data: { date: string; value: number }[]; f
                 aria-label={`${fmt(parseDate(d.date), 'M월 d일')}: ${format(d.value)}`}
               >
                 <div
-                  className="w-full max-w-7 rounded-t transition-opacity"
+                  className="w-full max-w-7 rounded-t-[4px] transition-opacity duration-150"
                   style={{
                     height: d.value > 0 ? Math.max(2, (d.value / niceMax) * H) : 0,
-                    background: COLOR_HEX.blue,
+                    background: 'var(--color-brand)',
                     opacity: hover === null || hover === i ? 1 : 0.45,
                   }}
                 />
@@ -220,16 +214,16 @@ function BarChart({ data, format }: { data: { date: string; value: number }[]; f
             ))}
             {hover !== null && (
               <div
-                className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-stone-900 px-2.5 py-1.5 text-xs whitespace-nowrap text-white shadow"
+                className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-ink px-2.5 py-1.5 text-xs whitespace-nowrap text-white shadow-pop"
                 style={{ left: `${((hover + 0.5) / data.length) * 100}%` }}
               >
-                <div className="text-stone-300">{fmt(parseDate(data[hover].date), 'M월 d일 (EEE)')}</div>
+                <div className="text-white/70">{fmt(parseDate(data[hover].date), 'M월 d일 (EEE)')}</div>
                 <div className="font-semibold">{format(data[hover].value)}</div>
               </div>
             )}
           </div>
           {/* x축 */}
-          <div className="mt-1.5 flex text-[11px] text-stone-400" style={{ gap: 2 }}>
+          <div className="mt-1.5 flex text-[11px] text-ink-subtle" style={{ gap: 2 }}>
             {data.map((d, i) => (
               <div key={d.date} className="flex-1 text-center whitespace-nowrap">
                 {(data.length - 1 - i) % labelEvery === 0 ? (data.length <= 7 ? fmt(parseDate(d.date), 'EEE') : fmt(parseDate(d.date), 'M/d')) : ''}
@@ -238,15 +232,15 @@ function BarChart({ data, format }: { data: { date: string; value: number }[]; f
           </div>
         </div>
       </div>
-      <button className="mt-3 cursor-pointer text-xs text-stone-500 hover:underline" onClick={() => setShowTable(!showTable)}>
+      <button className="btn-ghost btn-sm mt-3 -ml-2" onClick={() => setShowTable(!showTable)}>
         {showTable ? '표 숨기기' : '표로 보기'}
       </button>
       {showTable && (
         <table className="mt-2 w-full text-xs">
           <tbody>
             {data.map((d) => (
-              <tr key={d.date} className="border-t border-stone-100">
-                <td className="py-1 text-stone-500">{fmt(parseDate(d.date), 'M월 d일 (EEE)')}</td>
+              <tr key={d.date} className="border-t border-line">
+                <td className="py-1 text-ink-muted">{fmt(parseDate(d.date), 'M월 d일 (EEE)')}</td>
                 <td className="py-1 text-right tabular-nums">{format(d.value)}</td>
               </tr>
             ))}

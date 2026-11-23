@@ -4,13 +4,13 @@ import { SITE } from '../lib/site'
 
 function LegalLayout({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
-      <Link to="/" className="text-sm text-stone-500 hover:underline">
+    <div className="mx-auto max-w-2xl px-4 py-10 md:py-14">
+      <Link to="/" className="btn-ghost btn-sm -ml-3">
         ← {SITE.name}
       </Link>
       <h1 className="mt-4 mb-2 text-2xl font-bold tracking-tight">{title}</h1>
-      <p className="mb-8 text-sm text-stone-500">시행일: {SITE.effectiveDate}</p>
-      <div className="space-y-6 text-sm leading-relaxed text-stone-700 [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-stone-900 [&_li]:ml-5 [&_li]:list-disc">
+      <p className="mb-8 text-sm text-ink-muted">시행일: {SITE.effectiveDate}</p>
+      <div className="card space-y-7 p-6 text-sm leading-relaxed text-ink-muted md:p-8 [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-ink [&_li]:ml-5 [&_li]:list-disc">
         {children}
       </div>
     </div>

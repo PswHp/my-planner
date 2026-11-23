@@ -41,7 +41,7 @@ export function ConfirmDialog({ title, message, confirmLabel = '삭제', onConfi
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[60] flex animate-fade-in items-center justify-center bg-ink/40 p-4"
       onMouseDown={(e) => e.target === e.currentTarget && !busy && onCancel()}
     >
       <div
@@ -49,25 +49,27 @@ export function ConfirmDialog({ title, message, confirmLabel = '삭제', onConfi
         aria-modal="true"
         aria-labelledby="confirm-title"
         aria-describedby={message ? 'confirm-message' : undefined}
-        className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl"
+        className="w-full max-w-sm animate-pop-in rounded-sheet bg-surface p-6 text-center shadow-pop"
       >
-        <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-red-50 text-xl text-c-red" aria-hidden="true">
-          !
+        <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-danger-soft text-danger" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
+          </svg>
         </div>
         <h2 id="confirm-title" className="text-base font-semibold">
           {title}
         </h2>
         {message && (
-          <p id="confirm-message" className="mt-2 text-sm text-stone-500">
+          <p id="confirm-message" className="mt-1.5 text-sm break-words text-ink-muted">
             {message}
           </p>
         )}
-        {error && <p className="mt-3 text-sm text-[#b42f2f]">{error}</p>}
+        {error && <p className="alert-error mt-3">{error}</p>}
         <div className="mt-6 grid grid-cols-2 gap-2">
-          <button ref={cancelRef} type="button" className="btn-ghost border border-stone-200" onClick={onCancel} disabled={busy}>
+          <button ref={cancelRef} type="button" className="btn-secondary" onClick={onCancel} disabled={busy}>
             취소
           </button>
-          <button type="button" className="btn-primary btn-destructive" onClick={confirm} disabled={busy}>
+          <button type="button" className="btn-danger-solid" onClick={confirm} disabled={busy}>
             {busy ? '삭제 중…' : confirmLabel}
           </button>
         </div>

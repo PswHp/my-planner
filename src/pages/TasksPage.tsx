@@ -16,9 +16,9 @@ const FILTERS: { key: Filter; label: string }[] = [
 
 const PRIORITY: Record<number, { label: string; className: string }> = {
   0: { label: '없음', className: '' },
-  1: { label: '낮음', className: 'bg-stone-100 text-stone-600' },
-  2: { label: '보통', className: 'bg-amber-50 text-[#8a5a00]' },
-  3: { label: '높음', className: 'bg-red-50 text-[#b42f2f]' },
+  1: { label: '낮음', className: 'bg-surface-muted text-ink-muted' },
+  2: { label: '보통', className: 'bg-warning-soft text-warning' },
+  3: { label: '높음', className: 'bg-danger-soft text-danger' },
 }
 
 export default function TasksPage() {
@@ -80,59 +80,55 @@ export default function TasksPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title="할 일">
-        <span className="text-sm text-stone-500">남은 할 일 {openCount}개</span>
-      </PageHeader>
+      <PageHeader title="할 일" description={openCount > 0 ? `남은 할 일 ${openCount}개` : '모든 할 일을 끝냈어요'} />
 
       <QuickAdd onAdded={load} />
 
-      <div className="mt-5 mb-4 flex gap-1 rounded-lg bg-stone-200/60 p-1 text-sm" role="tablist">
+      <div className="segmented mt-5 mb-5" role="tablist" aria-label="할 일 필터">
         {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            role="tab"
-            aria-selected={filter === f.key}
-            onClick={() => setFilter(f.key)}
-            className={`flex-1 cursor-pointer rounded-md py-1.5 font-medium transition ${
-              filter === f.key ? 'bg-white shadow-sm' : 'text-stone-600'
-            }`}
-          >
+          <button key={f.key} role="tab" aria-selected={filter === f.key} onClick={() => setFilter(f.key)}>
             {f.label}
           </button>
         ))}
       </div>
 
-      {error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-[#b42f2f]">{error}</p>}
+      {error && <p className="alert-error mb-4">{error}</p>}
 
-      {groups.length === 0 && <p className="py-16 text-center text-sm text-stone-400">할 일이 없습니다</p>}
+      {groups.length === 0 && (
+        <div className="card py-14 text-center">
+          <p className="text-2xl" aria-hidden="true">🌱</p>
+          <p className="mt-2 text-sm text-ink-muted">할 일이 없습니다</p>
+        </div>
+      )}
 
       <div className="space-y-5">
         {groups.map((g) => (
           <section key={g.title}>
-            <h2 className={`mb-2 text-xs font-semibold ${g.title === '기한 지남' ? 'text-[#b42f2f]' : 'text-stone-500'}`}>
-              {g.title} <span className="font-normal">{g.items.length}</span>
+            <h2 className={`mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold ${g.title === '기한 지남' ? 'text-danger' : 'text-ink-muted'}`}>
+              {g.title}
+              <span className="rounded-full bg-surface-sunken px-1.5 py-px text-[11px] font-medium text-ink-muted">{g.items.length}</span>
             </h2>
-            <ul className="card divide-y divide-stone-100">
+            <ul className="card divide-y divide-line overflow-hidden">
               {g.items.map((t) => (
-                <li key={t.id} className="flex items-start gap-3 px-4 py-3">
+                <li key={t.id} className="flex items-start gap-3 px-4 py-3.5 transition hover:bg-surface-muted">
                   <input
                     type="checkbox"
                     checked={!!t.done}
                     onChange={() => toggle(t)}
-                    className="mt-0.5 h-4.5 w-4.5 shrink-0 cursor-pointer accent-c-blue"
+                    className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-brand"
                     aria-label={`${t.title} 완료`}
                   />
                   <button className="min-w-0 flex-1 cursor-pointer text-left" onClick={() => setEditing(t)}>
-                    <span className={`block text-sm ${t.done ? 'text-stone-400 line-through' : ''}`}>{t.title}</span>
+                    <span className={`block text-sm ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
                     {(t.notes || t.due_date || t.priority > 0) && (
-                      <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-stone-500">
+                      <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
                         {t.priority > 0 && (
-                          <span className={`rounded px-1.5 py-px font-medium ${PRIORITY[t.priority].className}`}>
+                          <span className={`rounded-full px-2 py-px font-medium ${PRIORITY[t.priority].className}`}>
                             {PRIORITY[t.priority].label}
                           </span>
                         )}
                         {t.due_date && (
-                          <span className={!t.done && t.due_date < today ? 'text-[#b42f2f]' : ''}>
+                          <span className={!t.done && t.due_date < today ? 'text-danger' : ''}>
                             {fmt(parseDate(t.due_date), 'M월 d일 (EEE)')}
                           </span>
                         )}
@@ -181,9 +177,9 @@ function QuickAdd({ onAdded }: { onAdded: () => void }) {
   }
 
   return (
-    <form onSubmit={submit} className="card flex flex-wrap items-center gap-2 p-2">
+    <form onSubmit={submit} className="card flex flex-wrap items-center gap-2 p-2 transition focus-within:border-brand focus-within:ring-3 focus-within:ring-brand/15">
       <input
-        className="min-w-40 flex-1 bg-transparent px-2 py-1.5 text-sm outline-none"
+        className="min-h-10 min-w-40 flex-1 bg-transparent px-2 text-[15px] outline-none placeholder:text-ink-subtle"
         placeholder="할 일 추가…"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -191,13 +187,13 @@ function QuickAdd({ onAdded }: { onAdded: () => void }) {
       />
       <input
         type="date"
-        className="rounded-md border border-stone-200 px-2 py-1 text-xs"
+        className="min-h-9 rounded-lg border border-line bg-surface-muted px-2 text-xs text-ink-muted transition hover:border-line-strong"
         value={due}
         onChange={(e) => setDue(e.target.value)}
         aria-label="마감일"
       />
       <select
-        className="rounded-md border border-stone-200 px-2 py-1 text-xs"
+        className="min-h-9 rounded-lg border border-line bg-surface-muted px-2 text-xs text-ink-muted transition hover:border-line-strong"
         value={priority}
         onChange={(e) => setPriority(Number(e.target.value))}
         aria-label="우선순위"
@@ -208,7 +204,7 @@ function QuickAdd({ onAdded }: { onAdded: () => void }) {
           </option>
         ))}
       </select>
-      <button className="btn-primary py-1.5" disabled={busy || !title.trim()}>
+      <button className="btn-primary" disabled={busy || !title.trim()}>
         추가
       </button>
     </form>
@@ -287,7 +283,7 @@ function TaskModal({ task, onClose, onSaved }: { task: Task; onClose: () => void
         <Field label="메모">
           <textarea className="input min-h-24" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </Field>
-        {error && <p className="text-sm text-[#b42f2f]">{error}</p>}
+        {error && <p className="alert-error">{error}</p>}
       </form>
     </Modal>
     </>

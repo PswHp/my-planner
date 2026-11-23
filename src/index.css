@@ -1,9 +1,47 @@
 @import 'tailwindcss';
 
+/* ==========================================================================
+   디자인 토큰 — Soft Minimal Game UI
+   색/둥글기/그림자는 모두 여기서만 정의합니다.
+   테마(포인트 컬러 등)를 바꿀 때는 이 블록만 수정하면 됩니다.
+   토큰 이름은 Tailwind 유틸리티로 바로 쓸 수 있습니다.
+     예) --color-brand → bg-brand / text-brand / border-brand
+         --radius-card → rounded-card,  --shadow-card → shadow-card
+   ========================================================================== */
 @theme {
   --font-sans: 'Pretendard', ui-sans-serif, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 
-  /* 카테고리/일정 색 (dataviz 기본 범주형 팔레트, 순서 고정) */
+  /* 배경 · 표면 */
+  --color-bg: #f5f6f2; /* 페이지 배경 */
+  --color-surface: #ffffff; /* 카드 · 모달 */
+  --color-surface-muted: #f3f5f0; /* 은은한 채움 (배지, 보조 영역) */
+  --color-surface-hover: #eef1ea; /* 호버 배경 */
+  --color-surface-sunken: #e8ebe4; /* 세그먼트 트랙 등 움푹한 영역 */
+
+  /* 텍스트 (흰 배경 기준 대비: ink 15:1, muted 6.2:1, subtle 4.6:1) */
+  --color-ink: #1d2420;
+  --color-ink-muted: #5a645d;
+  --color-ink-subtle: #676f69;
+
+  /* 테두리 */
+  --color-line: #e3e7df;
+  --color-line-strong: #cfd5cb;
+
+  /* 포인트 컬러 (차분한 그린) — 흰 글자 대비 4.9:1 */
+  --color-brand: #2b7f57;
+  --color-brand-hover: #236b49;
+  --color-brand-soft: #e6f3ec; /* 선택된 메뉴 · 강조 배경 */
+  --color-brand-ink: #1f6645; /* brand-soft 위 글자 (6:1) */
+
+  /* 상태 색 */
+  --color-danger: #c43c3c;
+  --color-danger-hover: #a93232;
+  --color-danger-soft: #fbeceb;
+  --color-danger-line: #f2c9c7;
+  --color-warning: #8a5a00;
+  --color-warning-soft: #fdf3dc;
+
+  /* 데이터 색 (일정 색상 · 타임블록 카테고리) — 범주형 팔레트, 순서 고정 */
   --color-c-blue: #2a78d6;
   --color-c-orange: #eb6834;
   --color-c-aqua: #1baf7a;
@@ -12,35 +50,136 @@
   --color-c-green: #008300;
   --color-c-violet: #6250d6;
   --color-c-red: #e34948;
+
+  /* 둥글기 */
+  --radius-control: 0.625rem; /* 버튼 · 입력창 (10px) */
+  --radius-card: 1rem; /* 카드 (16px) */
+  --radius-sheet: 1.5rem; /* 모달 · 바텀시트 (24px) */
+
+  /* 그림자 — 얇고 은은하게 */
+  --shadow-card: 0 1px 2px rgb(29 36 32 / 0.04), 0 1px 3px rgb(29 36 32 / 0.03);
+  --shadow-raised: 0 2px 6px rgb(29 36 32 / 0.06), 0 1px 2px rgb(29 36 32 / 0.04);
+  --shadow-pop: 0 16px 40px -12px rgb(29 36 32 / 0.22), 0 2px 6px rgb(29 36 32 / 0.06);
+
+  /* 짧고 자연스러운 인터랙션 */
+  --animate-pop-in: pop-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-sheet-in: sheet-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-fade-in: fade-in 160ms ease-out;
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.98);
+    }
+  }
+  @keyframes sheet-in {
+    from {
+      transform: translateY(16px);
+      opacity: 0;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
 }
 
-html,
-body {
-  background: #f7f7f5;
-  color: #1c1c1a;
+/* ==========================================================================
+   기본 스타일
+   ========================================================================== */
+@layer base {
+  html {
+    overflow-x: clip; /* 모바일 가로 스크롤 방지 (sticky는 유지) */
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+  input[type='checkbox'] {
+    accent-color: var(--color-brand);
+  }
 }
 
-/* 입력 요소 공통 */
-.input {
-  @apply w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-c-blue focus:ring-2 focus:ring-c-blue/20;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
-.btn-primary,
-.btn-ghost,
-.btn-danger {
-  @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition disabled:cursor-default disabled:opacity-50;
-}
-.btn-primary {
-  @apply bg-c-blue text-white hover:bg-[#256abf];
-}
-.btn-ghost {
-  @apply text-stone-600 hover:bg-stone-200/70;
-}
-.btn-danger {
-  @apply text-c-red hover:bg-red-50;
-}
-.card {
-  @apply rounded-2xl border border-stone-200 bg-white;
-}
-.btn-primary.btn-destructive {
-  @apply bg-c-red hover:bg-[#c23b3b];
+
+/* ==========================================================================
+   공통 컴포넌트 — components 레이어라서 화면별 유틸리티로 덮어쓸 수 있습니다.
+   ========================================================================== */
+@layer components {
+  /* 카드 */
+  .card {
+    @apply rounded-card border border-line bg-surface shadow-card;
+  }
+
+  /* 버튼: 기본 높이 40px (터치하기 편한 크기) */
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-danger,
+  .btn-danger-solid {
+    @apply inline-flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-control px-4 py-2 text-sm font-medium whitespace-nowrap transition duration-150 select-none active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45;
+  }
+  .btn-primary {
+    @apply bg-brand text-white shadow-card hover:bg-brand-hover;
+  }
+  .btn-secondary {
+    @apply border border-line bg-surface text-ink hover:border-line-strong hover:bg-surface-hover;
+  }
+  .btn-ghost {
+    @apply text-ink-muted hover:bg-surface-hover hover:text-ink;
+  }
+  .btn-danger {
+    @apply text-danger hover:bg-danger-soft;
+  }
+  .btn-danger-solid {
+    @apply bg-danger text-white shadow-card hover:bg-danger-hover;
+  }
+  /* 크기 · 형태 보조 */
+  .btn-sm {
+    @apply min-h-8 rounded-lg px-3 py-1 text-xs;
+  }
+  .btn-icon {
+    @apply aspect-square px-0;
+  }
+
+  /* 입력창 */
+  .input {
+    @apply min-h-10 w-full rounded-control border border-line-strong bg-surface px-3 py-2 text-sm text-ink transition duration-150 outline-none placeholder:text-ink-subtle hover:border-ink-subtle/50 focus:border-brand focus:ring-3 focus:ring-brand/15;
+  }
+
+  /* 세그먼트 탭 (필터, 기간 선택 등) — 선택 항목에 aria-selected="true" */
+  .segmented {
+    @apply flex gap-1 rounded-control bg-surface-sunken p-1 text-sm;
+  }
+  .segmented > [role='tab'] {
+    @apply flex-1 cursor-pointer rounded-lg px-3 py-1.5 font-medium whitespace-nowrap text-ink-muted transition duration-150 hover:text-ink;
+  }
+  .segmented > [role='tab'][aria-selected='true'] {
+    @apply bg-surface text-ink shadow-raised;
+  }
+
+  /* 알림 메시지 */
+  .alert-error {
+    @apply rounded-control border border-danger-line bg-danger-soft px-3 py-2 text-sm text-danger;
+  }
+
+  /* 섹션 제목 (카드 안) */
+  .section-title {
+    @apply text-[15px] font-semibold text-ink;
+  }
 }

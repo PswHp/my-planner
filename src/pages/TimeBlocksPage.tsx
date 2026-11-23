@@ -121,17 +121,19 @@ export default function TimeBlocksPage() {
 
   return (
     <div>
-      <PageHeader title={fmt(parseDate(date), 'M월 d일 (EEE)')}>
-        <button className="btn-ghost px-2" onClick={() => shift(-1)} aria-label="이전 날">
-          <ChevronLeft />
-        </button>
-        <button className="btn-ghost" onClick={() => setDate(todayStr())}>
-          오늘
-        </button>
-        <button className="btn-ghost px-2" onClick={() => shift(1)} aria-label="다음 날">
-          <ChevronRight />
-        </button>
-        <input type="date" className="input w-auto py-1.5" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="날짜 선택" />
+      <PageHeader title={fmt(parseDate(date), 'M월 d일 (EEE)')} description={isToday ? '오늘의 시간 계획' : '타임 블록'}>
+        <div className="flex items-center rounded-control border border-line bg-surface p-0.5 shadow-card">
+          <button className="btn-ghost btn-icon min-h-9" onClick={() => shift(-1)} aria-label="이전 날">
+            <ChevronLeft />
+          </button>
+          <button className="btn-ghost min-h-9 px-3" onClick={() => setDate(todayStr())}>
+            오늘
+          </button>
+          <button className="btn-ghost btn-icon min-h-9" onClick={() => shift(1)} aria-label="다음 날">
+            <ChevronRight />
+          </button>
+        </div>
+        <input type="date" className="input w-auto" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="날짜 선택" />
         <button
           className="btn-primary"
           onClick={() => {
@@ -143,17 +145,19 @@ export default function TimeBlocksPage() {
         </button>
       </PageHeader>
 
-      {error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-[#b42f2f]">{error}</p>}
+      {error && <p className="alert-error mb-4">{error}</p>}
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
+      <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         <div className="card overflow-hidden">
-          <p className="border-b border-stone-100 px-4 py-2 text-xs text-stone-500">빈 곳을 드래그해서 블록을 만들고, 블록을 클릭하면 수정합니다.</p>
+          <p className="flex items-center gap-2 border-b border-line bg-surface-muted px-4 py-2.5 text-xs text-ink-muted">
+            <span aria-hidden="true">💡</span>빈 곳을 드래그해서 블록을 만들고, 블록을 누르면 수정합니다.
+          </p>
           <div ref={scrollRef} className="h-[65vh] overflow-y-auto">
             <div className="relative flex" style={{ height: 24 * HOUR_PX }}>
               {/* 시간 눈금 */}
               <div className="w-14 shrink-0 select-none">
                 {Array.from({ length: 24 }, (_, h) => (
-                  <div key={h} className="relative text-right text-[11px] text-stone-400" style={{ height: HOUR_PX }}>
+                  <div key={h} className="relative text-right text-[11px] text-ink-subtle" style={{ height: HOUR_PX }}>
                     <span className="absolute -top-2 right-2">{h === 0 ? '' : `${String(h).padStart(2, '0')}:00`}</span>
                   </div>
                 ))}
@@ -161,13 +165,13 @@ export default function TimeBlocksPage() {
               {/* 그리드 */}
               <div
                 ref={gridRef}
-                className="relative flex-1 cursor-crosshair touch-none border-l border-stone-100"
+                className="relative flex-1 cursor-crosshair touch-none border-l border-line"
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
                 onPointerCancel={() => setDrag(null)}
                 style={{
-                  backgroundImage: `linear-gradient(to bottom, #e7e5e4 1px, transparent 1px), linear-gradient(to bottom, #f5f5f4 1px, transparent 1px)`,
+                  backgroundImage: `linear-gradient(to bottom, var(--color-line) 1px, transparent 1px), linear-gradient(to bottom, var(--color-surface-muted) 1px, transparent 1px)`,
                   backgroundSize: `100% ${HOUR_PX}px, 100% ${HOUR_PX / 2}px`,
                 }}
               >
@@ -178,19 +182,19 @@ export default function TimeBlocksPage() {
                     <button
                       key={b.id}
                       onClick={() => setDraft(b)}
-                      className="absolute cursor-pointer overflow-hidden rounded-md border-l-4 px-2 py-1 text-left text-xs transition hover:brightness-95"
+                      className="absolute cursor-pointer overflow-hidden rounded-lg border-l-4 px-2 py-1 text-left text-xs shadow-card transition duration-150 hover:shadow-raised hover:brightness-[0.98]"
                       style={{
                         top: b.start_min * PX_PER_MIN + 1,
                         height: height - 2,
                         left: `calc(${(lane / lanes) * 100}% + 4px)`,
                         width: `calc(${100 / lanes}% - 8px)`,
                         borderColor: color,
-                        background: `color-mix(in oklab, ${color} 16%, white)`,
+                        background: `color-mix(in oklab, ${color} 14%, var(--color-surface))`,
                       }}
                     >
-                      <div className="truncate font-semibold text-stone-800">{b.title}</div>
+                      <div className="truncate font-semibold text-ink">{b.title}</div>
                       {height > 30 && (
-                        <div className="truncate text-stone-600">
+                        <div className="truncate text-ink-muted">
                           {minToTime(b.start_min)}–{minToTime(b.end_min)} · {CATEGORY_INFO[b.category].label}
                         </div>
                       )}
@@ -200,7 +204,7 @@ export default function TimeBlocksPage() {
 
                 {dragRange && (
                   <div
-                    className="pointer-events-none absolute inset-x-1 rounded-md border-2 border-dashed border-c-blue bg-c-blue/10 px-2 py-1 text-xs font-medium text-[#1c5cab]"
+                    className="pointer-events-none absolute inset-x-1 rounded-lg border-2 border-dashed border-brand bg-brand-soft px-2 py-1 text-xs font-medium text-brand-ink"
                     style={{ top: dragRange.start * PX_PER_MIN, height: Math.max(dragRange.end - dragRange.start, SNAP) * PX_PER_MIN }}
                   >
                     {minToTime(dragRange.start)}–{minToTime(Math.max(dragRange.end, dragRange.start + SNAP))}
@@ -209,8 +213,8 @@ export default function TimeBlocksPage() {
 
                 {isToday && (
                   <div className="pointer-events-none absolute inset-x-0 z-10 flex items-center" style={{ top: nowMin * PX_PER_MIN }}>
-                    <span className="-ml-1 h-2.5 w-2.5 rounded-full bg-c-red" />
-                    <span className="h-0.5 flex-1 bg-c-red" />
+                    <span className="-ml-1 h-2.5 w-2.5 rounded-full bg-danger" />
+                    <span className="h-0.5 flex-1 bg-danger" />
                   </div>
                 )}
               </div>
@@ -220,18 +224,18 @@ export default function TimeBlocksPage() {
 
         <div className="space-y-5">
           <div className="card p-4">
-            <h2 className="mb-3 flex items-baseline justify-between font-semibold">
-              하루 요약 <span className="text-sm font-normal text-stone-500">{formatDuration(total)}</span>
+            <h2 className="section-title mb-3 flex items-baseline justify-between">
+              하루 요약 <span className="text-sm font-normal text-ink-muted">{formatDuration(total)}</span>
             </h2>
             {summary.length === 0 ? (
-              <p className="py-3 text-center text-sm text-stone-400">계획한 블록이 없습니다</p>
+              <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">계획한 블록이 없습니다</p>
             ) : (
               <ul className="space-y-2">
                 {summary.map((s) => (
                   <li key={s.category} className="flex items-center gap-2 text-sm">
-                    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: COLOR_HEX[CATEGORY_INFO[s.category].color] }} />
+                    <span className="h-3 w-3 rounded-full" style={{ background: COLOR_HEX[CATEGORY_INFO[s.category].color] }} />
                     <span className="flex-1">{CATEGORY_INFO[s.category].label}</span>
-                    <span className="text-stone-600 tabular-nums">{formatDuration(s.minutes)}</span>
+                    <span className="text-ink-muted tabular-nums">{formatDuration(s.minutes)}</span>
                   </li>
                 ))}
               </ul>
@@ -239,18 +243,18 @@ export default function TimeBlocksPage() {
           </div>
 
           <div className="card p-4">
-            <h2 className="mb-1 font-semibold">할 일 → 블록</h2>
-            <p className="mb-3 text-xs text-stone-500">할 일을 누르면 그 할 일에 연결된 블록을 만듭니다.</p>
+            <h2 className="section-title mb-1">할 일 → 블록</h2>
+            <p className="mb-3 text-xs text-ink-muted">할 일을 누르면 그 할 일에 연결된 블록을 만듭니다.</p>
             {openTasks.length === 0 ? (
-              <p className="py-3 text-center text-sm text-stone-400">남은 할 일이 없습니다</p>
+              <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">남은 할 일이 없습니다</p>
             ) : (
               <ul className="max-h-72 space-y-1 overflow-y-auto">
                 {openTasks.map((t) => (
                   <li key={t.id}>
-                    <button onClick={() => blockFromTask(t)} className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-stone-50">
-                      <span className="text-stone-400">＋</span>
+                    <button onClick={() => blockFromTask(t)} className="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-control px-2 py-2 text-left text-sm transition hover:bg-surface-hover">
+                      <span className="text-ink-subtle">＋</span>
                       <span className="flex-1 truncate">{t.title}</span>
-                      {t.due_date && <span className="text-xs text-stone-400">{fmt(parseDate(t.due_date), 'M/d')}</span>}
+                      {t.due_date && <span className="text-xs text-ink-subtle">{fmt(parseDate(t.due_date), 'M/d')}</span>}
                     </button>
                   </li>
                 ))}
@@ -366,8 +370,8 @@ function BlockModal({
                 type="button"
                 onClick={() => setCategory(c)}
                 aria-pressed={category === c}
-                className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition ${
-                  category === c ? 'border-stone-800 bg-stone-800 text-white' : 'border-stone-200 hover:bg-stone-50'
+                className={`flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition duration-150 ${
+                  category === c ? 'border-ink bg-ink text-white' : 'border-line hover:bg-surface-hover'
                 }`}
               >
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLOR_HEX[CATEGORY_INFO[c].color] }} />
@@ -387,7 +391,7 @@ function BlockModal({
             ))}
           </select>
         </Field>
-        {error && <p className="text-sm text-[#b42f2f]">{error}</p>}
+        {error && <p className="alert-error">{error}</p>}
       </form>
     </Modal>
     </>

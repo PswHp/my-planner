@@ -43,11 +43,11 @@ export default function App() {
 
   if (loadError)
     return (
-      <div className="grid min-h-dvh place-items-center p-6 text-center text-sm text-stone-600">
+      <div className="grid min-h-dvh place-items-center p-6 text-center text-sm text-ink-muted">
         서버에 연결할 수 없습니다: {loadError}
       </div>
     )
-  if (user === undefined) return <div className="grid min-h-dvh place-items-center text-sm text-stone-400">불러오는 중…</div>
+  if (user === undefined) return <div className="grid min-h-dvh place-items-center text-sm text-ink-subtle">불러오는 중…</div>
   if (user === null) return <LoginPage />
 
   const signedOut = () => {
@@ -57,7 +57,7 @@ export default function App() {
 
   return (
     <Routes>
-      <Route element={<Layout user={user} />}>
+      <Route element={<Layout user={user} onLogout={signedOut} />}>
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/blocks" element={<TimeBlocksPage />} />
