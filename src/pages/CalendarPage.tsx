@@ -80,18 +80,6 @@ export default function CalendarPage() {
     )
   }, [tasks, selected, today])
 
-  const toggleTask = async (t: Task) => {
-    const done = !t.done
-    const completed_at = done ? toDateTimeStr(new Date()) : null
-    setTasks((ts) => ts.map((x) => (x.id === t.id ? { ...x, done: done ? 1 : 0, completed_at } : x)))
-    try {
-      await api.patch(`/tasks/${t.id}`, { done, completed_at })
-    } catch (e) {
-      setError((e as Error).message)
-      load()
-    }
-  }
-
   const openNew = (date: string) =>
     setEditing({
       title: '',
@@ -240,7 +228,7 @@ export default function CalendarPage() {
             </ul>
           </div>
 
-          <DayTasks date={selected} tasks={dayTasks} onToggle={toggleTask} onAdded={load} />
+          <DayTasks date={selected} tasks={dayTasks} onAdded={load} />
         </div>
       </div>
 
@@ -261,12 +249,10 @@ export default function CalendarPage() {
 function DayTasks({
   date,
   tasks,
-  onToggle,
   onAdded,
 }: {
   date: string
   tasks: Task[]
-  onToggle: (t: Task) => void
   onAdded: () => void
 }) {
   const [title, setTitle] = useState('')
@@ -289,17 +275,10 @@ function DayTasks({
 
   return (
     <div className="card p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="section-title">
-          할 일{' '}
-          <span className="text-sm font-normal text-ink-muted">
-            {tasks.length ? `${openCount}/${tasks.length}` : ''}
-          </span>
-        </h2>
-        <Link to="/tasks" className="btn-ghost btn-sm">
-          전체 보기
-        </Link>
-      </div>
+      <h2 className="section-title mb-3">
+        할 일{' '}
+        <span className="text-sm font-normal text-ink-muted">{tasks.length ? `${openCount}/${tasks.length}` : ''}</span>
+      </h2>
 
       {tasks.length === 0 && (
         <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">
@@ -311,12 +290,10 @@ function DayTasks({
           const overdue = !t.done && !!t.due_date && t.due_date < today
           return (
             <li key={t.id}>
-              <label className="flex min-h-10 cursor-pointer items-start gap-2.5 rounded-control px-2 py-2 transition hover:bg-surface-hover">
-                <input
-                  type="checkbox"
-                  checked={!!t.done}
-                  onChange={() => onToggle(t)}
-                  className="mt-0.5 h-[18px] w-[18px] shrink-0 cursor-pointer accent-brand"
+              <div className="flex min-h-10 items-start gap-2.5 rounded-control px-2 py-2">
+                <span
+                  className={`mt-[7px] h-2 w-2 shrink-0 rounded-full ${t.done ? 'bg-line-strong' : overdue ? 'bg-danger' : 'bg-brand-accent'}`}
+                  aria-hidden="true"
                 />
                 <span className="min-w-0 flex-1">
                   <span className={`block truncate text-sm ${t.done ? 'text-ink-subtle line-through' : ''}`}>
@@ -329,7 +306,8 @@ function DayTasks({
                 {t.priority === 3 && !t.done && (
                   <span className="rounded bg-danger-soft px-1.5 py-px text-[11px] font-medium text-danger">높음</span>
                 )}
-              </label>
+                {t.done ? <span className="sr-only">(완료)</span> : null}
+              </div>
             </li>
           )
         })}
@@ -347,6 +325,10 @@ function DayTasks({
           추가
         </button>
       </form>
+
+      <Link to="/tasks" className="mt-3 block text-right text-xs font-semibold text-brand-ink hover:underline">
+        할 일 전체 보기 →
+      </Link>
     </div>
   )
 }
