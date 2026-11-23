@@ -78,7 +78,7 @@ export default function TasksPage() {
         title: '기한 지남',
         items: [] as Task[],
         always: true,
-        empty: '기한이 지난 할 일이 없어요',
+        empty: '밀린 일이 없어요. 잘 하고 있어요!',
         test: (t: Task) => !t.done && !!t.due_date && t.due_date < today,
       },
       { title: '내일', items: [] as Task[], test: (t: Task) => t.due_date === tomorrow },
