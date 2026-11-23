@@ -406,18 +406,17 @@ function TodayTasks({
       </h2>
 
       {adding && (
-        <form onSubmit={add} className="mb-2 flex gap-2">
+        <form onSubmit={add} className="mb-2">
           <input
             className="input"
-            placeholder="할 일을 입력하세요"
+            placeholder="할 일을 입력하고 Enter"
+            aria-label="새 할 일 (Enter로 추가)"
+            enterKeyHint="done"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={200}
             autoFocus
           />
-          <button className="btn-primary shrink-0" disabled={!title.trim() || busy}>
-            추가
-          </button>
         </form>
       )}
 

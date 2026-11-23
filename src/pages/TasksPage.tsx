@@ -23,7 +23,7 @@ const PRIORITY: Record<number, { label: string; className: string }> = {
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
-  const [filter, setFilter] = useState<Filter>('active')
+  const [filter, setFilter] = useState<Filter>('all')
   const [editing, setEditing] = useState<Task | null>(null)
   const [error, setError] = useState<string | null>(null)
 
