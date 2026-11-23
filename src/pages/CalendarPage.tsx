@@ -9,13 +9,14 @@ import {
   startOfWeek,
 } from 'date-fns'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router'
 import { ColorPicker } from '../components/ColorPicker'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ChevronLeft, ChevronRight, PlusIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
 import { api, COLOR_HEX, type CalendarEvent, type Color, type Task } from '../lib/api'
-import { fmt, parseDate, toDateStr, todayStr } from '../lib/date'
+import { fmt, parseDate, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -67,6 +68,26 @@ export default function CalendarPage() {
 
   const selectedItems = byDay.get(selected) ?? { events: [], tasks: [] }
   const today = todayStr()
+
+  // 선택한 날짜가 마감인 할 일 (오늘을 선택했으면 기한 지난 미완료 할 일도 함께)
+  const dayTasks = useMemo(() => {
+    const list = tasks.filter(
+      (t) => t.due_date === selected || (selected === today && !t.done && !!t.due_date && t.due_date < today),
+    )
+    return list.sort((a, b) => a.done - b.done || (a.due_date ?? '').localeCompare(b.due_date ?? '') || b.priority - a.priority)
+  }, [tasks, selected, today])
+
+  const toggleTask = async (t: Task) => {
+    const done = !t.done
+    const completed_at = done ? toDateTimeStr(new Date()) : null
+    setTasks((ts) => ts.map((x) => (x.id === t.id ? { ...x, done: done ? 1 : 0, completed_at } : x)))
+    try {
+      await api.patch(`/tasks/${t.id}`, { done, completed_at })
+    } catch (e) {
+      setError((e as Error).message)
+      load()
+    }
+  }
 
   const openNew = (date: string) =>
     setEditing({ title: '', start_at: `${date}T09:00`, end_at: `${date}T10:00`, all_day: 0, color: 'blue', description: '' })
@@ -154,17 +175,18 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* 선택한 날짜 상세 */}
-        <div className="card h-fit p-4">
+        {/* 선택한 날짜 상세: 일정 + 할 일 */}
+        <div className="h-fit space-y-4">
+        <div className="card p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold">{fmt(parseDate(selected), 'M월 d일 (EEE)')}</h2>
+            <h2 className="font-semibold">
+              {fmt(parseDate(selected), 'M월 d일 (EEE)')} <span className="text-sm font-normal text-stone-500">일정</span>
+            </h2>
             <button className="btn-ghost px-2 py-1 text-xs" onClick={() => openNew(selected)}>
               <PlusIcon /> 추가
             </button>
           </div>
-          {selectedItems.events.length === 0 && selectedItems.tasks.length === 0 && (
-            <p className="py-6 text-center text-sm text-stone-400">일정이 없습니다</p>
-          )}
+          {selectedItems.events.length === 0 && <p className="py-4 text-center text-sm text-stone-400">일정이 없습니다</p>}
           <ul className="space-y-2">
             {selectedItems.events.map((ev) => (
               <li key={ev.id}>
@@ -181,19 +203,14 @@ export default function CalendarPage() {
               </li>
             ))}
           </ul>
-          {selectedItems.tasks.length > 0 && (
-            <>
-              <h3 className="mt-4 mb-2 text-xs font-medium text-stone-500">마감 할 일</h3>
-              <ul className="space-y-1">
-                {selectedItems.tasks.map((t) => (
-                  <li key={t.id} className={`flex items-center gap-2 px-2 text-sm ${t.done ? 'text-stone-400 line-through' : ''}`}>
-                    <span>{t.done ? '☑' : '☐'}</span>
-                    <span className="truncate">{t.title}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
+        </div>
+
+        <DayTasks
+          date={selected}
+          tasks={dayTasks}
+          onToggle={toggleTask}
+          onAdded={load}
+        />
         </div>
       </div>
 
@@ -207,6 +224,90 @@ export default function CalendarPage() {
           }}
         />
       )}
+    </div>
+  )
+}
+
+function DayTasks({
+  date,
+  tasks,
+  onToggle,
+  onAdded,
+}: {
+  date: string
+  tasks: Task[]
+  onToggle: (t: Task) => void
+  onAdded: () => void
+}) {
+  const [title, setTitle] = useState('')
+  const [busy, setBusy] = useState(false)
+  const today = todayStr()
+  const openCount = tasks.filter((t) => !t.done).length
+
+  const add = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!title.trim()) return
+    setBusy(true)
+    try {
+      await api.post('/tasks', { title, due_date: date, created_at: toDateTimeStr(new Date()) })
+      setTitle('')
+      onAdded()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="card p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-semibold">
+          할 일 <span className="text-sm font-normal text-stone-500">{tasks.length ? `${openCount}/${tasks.length}` : ''}</span>
+        </h2>
+        <Link to="/tasks" className="text-xs text-stone-500 hover:underline">
+          전체 보기
+        </Link>
+      </div>
+
+      {tasks.length === 0 && <p className="py-3 text-center text-sm text-stone-400">이 날 마감인 할 일이 없습니다</p>}
+      <ul className="space-y-1">
+        {tasks.map((t) => {
+          const overdue = !t.done && !!t.due_date && t.due_date < today
+          return (
+            <li key={t.id}>
+              <label className="flex cursor-pointer items-start gap-2.5 rounded-lg px-2 py-1.5 hover:bg-stone-50">
+                <input
+                  type="checkbox"
+                  checked={!!t.done}
+                  onChange={() => onToggle(t)}
+                  className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-c-blue"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className={`block truncate text-sm ${t.done ? 'text-stone-400 line-through' : ''}`}>{t.title}</span>
+                  {overdue && (
+                    <span className="text-xs text-[#b42f2f]">기한 지남 · {fmt(parseDate(t.due_date!), 'M/d')}</span>
+                  )}
+                </span>
+                {t.priority === 3 && !t.done && (
+                  <span className="rounded bg-red-50 px-1.5 py-px text-[11px] font-medium text-[#b42f2f]">높음</span>
+                )}
+              </label>
+            </li>
+          )
+        })}
+      </ul>
+
+      <form onSubmit={add} className="mt-3 flex gap-2 border-t border-stone-100 pt-3">
+        <input
+          className="input py-1.5"
+          placeholder={`${fmt(parseDate(date), 'M/d')} 할 일 추가…`}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          aria-label="할 일 추가"
+        />
+        <button className="btn-primary shrink-0 py-1.5" disabled={busy || !title.trim()}>
+          추가
+        </button>
+      </form>
     </div>
   )
 }
