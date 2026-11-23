@@ -10,6 +10,7 @@ import {
 } from 'date-fns'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ColorPicker } from '../components/ColorPicker'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ChevronLeft, ChevronRight, PlusIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
@@ -254,20 +255,31 @@ function EventModal({
     }
   }
 
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+
   const remove = async () => {
-    if (!initial.id || !confirm('이 일정을 삭제할까요?')) return
+    if (!initial.id) return
     await api.del(`/events/${initial.id}`)
     onSaved()
   }
 
   return (
+    <>
+    {confirmingDelete && (
+      <ConfirmDialog
+        title="이 일정을 삭제할까요?"
+        message={`${title.trim() || '제목 없음'} · ${fmt(parseDate(startDate), 'M월 d일 (EEE)')} ${allDay ? '종일' : startTime}`}
+        onConfirm={remove}
+        onCancel={() => setConfirmingDelete(false)}
+      />
+    )}
     <Modal
       title={initial.id ? '일정 수정' : '새 일정'}
       onClose={onClose}
       footer={
         <>
           {initial.id && (
-            <button type="button" className="btn-danger" onClick={remove}>
+            <button type="button" className="btn-danger" onClick={() => setConfirmingDelete(true)}>
               삭제
             </button>
           )}
@@ -324,5 +336,6 @@ function EventModal({
         {error && <p className="text-sm text-[#b42f2f]">{error}</p>}
       </form>
     </Modal>
+    </>
   )
 }
