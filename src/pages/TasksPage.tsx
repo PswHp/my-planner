@@ -132,7 +132,7 @@ export default function TasksPage() {
               <ul className="card divide-y divide-line overflow-hidden">
                 {g.items.map((t) => (
                   <li key={t.id} className="flex items-start gap-3 px-4 py-3.5 transition hover:bg-surface-muted">
-                    {/* 기한 지난 항목은 완료 체크 대신 오른쪽 삭제 버튼 */}
+                    {/* 기한 지난 항목은 완료 체크 없음 (모든 항목 오른쪽에 삭제 버튼) */}
                     {g.title !== '기한 지남' && (
                       <input
                         type="checkbox"
@@ -160,16 +160,14 @@ export default function TasksPage() {
                         </span>
                       )}
                     </button>
-                    {g.title === '기한 지남' && (
-                      <button
-                        className="btn-danger btn-icon -my-1.5 -mr-2 min-h-9 shrink-0 rounded-full"
-                        onClick={() => setDeleting(t)}
-                        aria-label={`${t.title} 삭제`}
-                        title="삭제"
-                      >
-                        <TrashIcon />
-                      </button>
-                    )}
+                    <button
+                      className="btn-danger btn-icon -my-1.5 -mr-2 min-h-9 shrink-0 rounded-full"
+                      onClick={() => setDeleting(t)}
+                      aria-label={`${t.title} 삭제`}
+                      title="삭제"
+                    >
+                      <TrashIcon />
+                    </button>
                   </li>
                 ))}
               </ul>

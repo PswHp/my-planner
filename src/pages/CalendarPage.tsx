@@ -70,15 +70,11 @@ export default function CalendarPage() {
   const selectedItems = byDay.get(selected) ?? { events: [], tasks: [] }
   const today = todayStr()
 
-  // 선택한 날짜가 마감인 할 일 (오늘을 선택했으면 기한 지난 미완료 할 일도 함께)
-  const dayTasks = useMemo(() => {
-    const list = tasks.filter(
-      (t) => t.due_date === selected || (selected === today && !t.done && !!t.due_date && t.due_date < today),
-    )
-    return list.sort(
-      (a, b) => a.done - b.done || (a.due_date ?? '').localeCompare(b.due_date ?? '') || b.priority - a.priority,
-    )
-  }, [tasks, selected, today])
+  // 선택한 날짜가 마감인 할 일만 (그 이전에 기한이 지난 할 일은 표시하지 않음)
+  const dayTasks = useMemo(
+    () => tasks.filter((t) => t.due_date === selected).sort((a, b) => a.done - b.done || b.priority - a.priority),
+    [tasks, selected],
+  )
 
   const openNew = (date: string) =>
     setEditing({
@@ -257,7 +253,6 @@ function DayTasks({
 }) {
   const [title, setTitle] = useState('')
   const [busy, setBusy] = useState(false)
-  const today = todayStr()
   const openCount = tasks.filter((t) => !t.done).length
 
   const add = async (e: React.FormEvent) => {
@@ -287,21 +282,17 @@ function DayTasks({
       )}
       <ul className="space-y-0.5">
         {tasks.map((t) => {
-          const overdue = !t.done && !!t.due_date && t.due_date < today
           return (
             <li key={t.id}>
               <div className="flex min-h-10 items-start gap-2.5 rounded-control px-2 py-2">
                 <span
-                  className={`mt-[7px] h-2 w-2 shrink-0 rounded-full ${t.done ? 'bg-line-strong' : overdue ? 'bg-danger' : 'bg-brand-accent'}`}
+                  className={`mt-[7px] h-2 w-2 shrink-0 rounded-full ${t.done ? 'bg-line-strong' : 'bg-brand-accent'}`}
                   aria-hidden="true"
                 />
                 <span className="min-w-0 flex-1">
                   <span className={`block truncate text-sm ${t.done ? 'text-ink-subtle line-through' : ''}`}>
                     {t.title}
                   </span>
-                  {overdue && (
-                    <span className="text-xs text-danger">기한 지남 · {fmt(parseDate(t.due_date!), 'M/d')}</span>
-                  )}
                 </span>
                 {t.priority === 3 && !t.done && (
                   <span className="rounded bg-danger-soft px-1.5 py-px text-[11px] font-medium text-danger">높음</span>
