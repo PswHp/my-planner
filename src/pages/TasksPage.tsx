@@ -2,6 +2,7 @@ import { addDays } from 'date-fns'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateField } from '../components/DateTimePicker'
+import { TrashIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
 import { api, type Task } from '../lib/api'
@@ -25,6 +26,7 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [filter, setFilter] = useState<Filter>('all')
   const [editing, setEditing] = useState<Task | null>(null)
+  const [deleting, setDeleting] = useState<Task | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
@@ -66,25 +68,25 @@ export default function TasksPage() {
     const buckets = [
       // always: 할 일이 없어도 항상 보이는 묶음
       {
-        title: '기한 지남',
-        items: [] as Task[],
-        always: true,
-        empty: '기한이 지난 할 일이 없어요',
-        test: (t: Task) => !t.done && !!t.due_date && t.due_date < today,
-      },
-      {
         title: '오늘',
         items: [] as Task[],
         always: true,
         empty: '오늘 마감인 할 일이 없어요',
         test: (t: Task) => t.due_date === today,
       },
+      {
+        title: '기한 지남',
+        items: [] as Task[],
+        always: true,
+        empty: '기한이 지난 할 일이 없어요',
+        test: (t: Task) => !t.done && !!t.due_date && t.due_date < today,
+      },
       { title: '내일', items: [] as Task[], test: (t: Task) => t.due_date === tomorrow },
       { title: '예정', items: [] as Task[], test: (t: Task) => !!t.due_date && t.due_date > tomorrow },
       { title: '기한 없음', items: [] as Task[], test: (t: Task) => !t.due_date },
-      { title: '지난 할 일', items: [] as Task[], test: () => true },
     ]
-    for (const t of visible) buckets.find((b) => b.test(t))!.items.push(t)
+    // 어느 묶음에도 해당하지 않는 할 일(기한이 지난 완료 항목)은 '완료' 탭에서만 보입니다
+    for (const t of visible) buckets.find((b) => b.test(t))?.items.push(t)
     return buckets.filter((b) => b.items.length > 0 || ('always' in b && b.always))
   }, [tasks, filter, today])
 
@@ -130,13 +132,16 @@ export default function TasksPage() {
               <ul className="card divide-y divide-line overflow-hidden">
                 {g.items.map((t) => (
                   <li key={t.id} className="flex items-start gap-3 px-4 py-3.5 transition hover:bg-surface-muted">
-                    <input
-                      type="checkbox"
-                      checked={!!t.done}
-                      onChange={() => toggle(t)}
-                      className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-brand"
-                      aria-label={`${t.title} 완료`}
-                    />
+                    {/* 기한 지난 항목은 완료 체크 대신 오른쪽 삭제 버튼 */}
+                    {g.title !== '기한 지남' && (
+                      <input
+                        type="checkbox"
+                        checked={!!t.done}
+                        onChange={() => toggle(t)}
+                        className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-brand"
+                        aria-label={`${t.title} 완료`}
+                      />
+                    )}
                     <button className="min-w-0 flex-1 cursor-pointer text-left" onClick={() => setEditing(t)}>
                       <span className={`block text-sm ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
                       {(t.notes || t.due_date || t.priority > 0) && (
@@ -155,6 +160,16 @@ export default function TasksPage() {
                         </span>
                       )}
                     </button>
+                    {g.title === '기한 지남' && (
+                      <button
+                        className="btn-danger btn-icon -my-1.5 -mr-2 min-h-9 shrink-0 rounded-full"
+                        onClick={() => setDeleting(t)}
+                        aria-label={`${t.title} 삭제`}
+                        title="삭제"
+                      >
+                        <TrashIcon />
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -162,6 +177,19 @@ export default function TasksPage() {
           </section>
         ))}
       </div>
+
+      {deleting && (
+        <ConfirmDialog
+          title="이 할 일을 삭제할까요?"
+          message={`${deleting.title}${deleting.due_date ? ` · ${fmt(parseDate(deleting.due_date), 'M월 d일')} 마감` : ''}`}
+          onConfirm={async () => {
+            await api.del(`/tasks/${deleting.id}`)
+            setDeleting(null)
+            load()
+          }}
+          onCancel={() => setDeleting(null)}
+        />
+      )}
 
       {editing && (
         <TaskModal
