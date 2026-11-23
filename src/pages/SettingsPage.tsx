@@ -98,7 +98,7 @@ function ThemePicker() {
     <section className="card p-5">
       <h2 className="section-title">테마 색</h2>
       <p className="mt-1 mb-4 text-sm text-ink-muted">사이트 전체의 포인트 색을 바꿔요. 선택한 테마는 이 기기에만 저장돼요.</p>
-      <div role="radiogroup" aria-label="테마 색" className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div role="radiogroup" aria-label="테마 색" className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {THEMES.map((t) => {
           const on = t.id === theme
           return (

@@ -37,6 +37,25 @@ export interface User {
   picture: string | null
 }
 
+/** GET /api/me — 사용자 + 보유 코인 + 오늘 접속 보상 수령 여부 */
+export interface Me extends User {
+  coins: number
+  dailyReward: { date: string; claimed: boolean }
+}
+
+export type Rarity = 'N' | 'R' | 'SR' | 'SSR'
+
+/** POST /api/rewards/daily 결과 (서버가 결정) */
+export interface DailyRewardResult {
+  date: string
+  alreadyClaimed: boolean
+  accessory: { id: string; name: string; rarity: Rarity; description: string }
+  duplicate: boolean
+  coins: number
+  baseCoins: number
+  totalCoins: number
+}
+
 export const COLORS = ['blue', 'orange', 'aqua', 'yellow', 'magenta', 'green', 'violet', 'red'] as const
 export type Color = (typeof COLORS)[number]
 

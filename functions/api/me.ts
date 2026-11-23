@@ -1,8 +1,22 @@
 import { cookieName, isSecure } from '../_lib/auth'
 import type { Handler } from '../_lib/env'
 import { HttpError, json, readJson, setCookie } from '../_lib/http'
+import { rewardDate } from '../_lib/rewards'
 
-export const onRequestGet: Handler = async ({ data }) => json(data.user)
+/**
+ * GET /api/me — 로그인 사용자 + 보유 코인 + 오늘 접속 보상 수령 여부
+ * (페이지를 열 때 한 번만 호출되므로 보상 확인용 API를 따로 부르지 않음)
+ */
+export const onRequestGet: Handler = async ({ env, data }) => {
+  const date = rewardDate()
+  const row = await env.DB.prepare(
+    `SELECT u.coins, EXISTS(SELECT 1 FROM daily_rewards WHERE user_id = u.id AND reward_date = ?2) AS claimed
+       FROM users u WHERE u.id = ?1`,
+  )
+    .bind(data.user.id, date)
+    .first<{ coins: number; claimed: number }>()
+  return json({ ...data.user, coins: row?.coins ?? 0, dailyReward: { date, claimed: row?.claimed === 1 } })
+}
 
 /** DELETE /api/me — 회원 탈퇴: 사용자의 모든 데이터와 세션을 즉시 삭제 */
 export const onRequestDelete: Handler = async ({ env, request, data }) => {
@@ -10,6 +24,8 @@ export const onRequestDelete: Handler = async ({ env, request, data }) => {
   if (body.confirm !== data.user.email) throw new HttpError(400, '확인용 이메일이 일치하지 않습니다.')
   const uid = data.user.id
   await env.DB.batch([
+    env.DB.prepare('DELETE FROM daily_rewards WHERE user_id = ?').bind(uid),
+    env.DB.prepare('DELETE FROM user_accessories WHERE user_id = ?').bind(uid),
     env.DB.prepare('DELETE FROM time_blocks WHERE user_id = ?').bind(uid),
     env.DB.prepare('DELETE FROM tasks WHERE user_id = ?').bind(uid),
     env.DB.prepare('DELETE FROM events WHERE user_id = ?').bind(uid),

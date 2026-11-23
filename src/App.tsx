@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
 import { Layout } from './components/Layout'
-import { api, ApiError, type User } from './lib/api'
+import { DailyReward } from './components/DailyReward'
+import { api, ApiError, type Me } from './lib/api'
 import CalendarPage from './pages/CalendarPage'
 import DashboardPage from './pages/DashboardPage'
 import { PrivacyPage, TermsPage } from './pages/LegalPages'
@@ -18,12 +19,13 @@ const PUBLIC_PATHS: Record<string, () => React.JSX.Element> = {
 
 export default function App() {
   const { pathname } = useLocation()
-  const [user, setUser] = useState<User | null | undefined>(undefined)
+  const [user, setUser] = useState<Me | null | undefined>(undefined)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [rewardHidden, setRewardHidden] = useState(false)
 
   const loadUser = useCallback(() => {
     api
-      .get<User>('/me')
+      .get<Me>('/me')
       .then(setUser)
       .catch((e) => {
         if (e instanceof ApiError && e.status === 401) setUser(null)
@@ -44,9 +46,7 @@ export default function App() {
 
   if (loadError)
     return (
-      <div className="grid min-h-dvh place-items-center p-6 text-center text-sm text-ink-muted">
-        서버에 연결할 수 없습니다: {loadError}
-      </div>
+      <div className="grid min-h-dvh place-items-center p-6 text-center text-sm text-ink-muted">서버에 연결할 수 없습니다: {loadError}</div>
     )
   if (user === undefined) return <div className="grid min-h-dvh place-items-center text-sm text-ink-subtle">불러오는 중…</div>
   if (user === null) return <LoginPage />
@@ -56,17 +56,42 @@ export default function App() {
     history.replaceState(null, '', '/')
   }
 
+  // 오늘 첫 접속 보상 — '나중에 받기'를 누르면 이번 방문(탭)에서는 다시 띄우지 않음
+  const laterKey = `dailumi:reward-later:${user.dailyReward.date}`
+  let later = false
+  try {
+    later = sessionStorage.getItem(laterKey) === '1'
+  } catch {
+    /* 저장소 사용 불가 */
+  }
+  const showReward = !user.dailyReward.claimed && !later && !rewardHidden
+
   return (
-    <Routes>
-      <Route element={<Layout user={user} onLogout={signedOut} />}>
-        <Route path="/dashboard" element={<DashboardPage user={user} />} />
-        <Route path="/calendar" element={<CalendarPage />} />
-        <Route path="/tasks" element={<TasksPage />} />
-        <Route path="/blocks" element={<TimeBlocksPage />} />
-        <Route path="/stats" element={<StatsPage />} />
-        <Route path="/settings" element={<SettingsPage user={user} onSignedOut={signedOut} />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Route>
-    </Routes>
+    <>
+      <Routes>
+        <Route element={<Layout user={user} onLogout={signedOut} />}>
+          <Route path="/dashboard" element={<DashboardPage user={user} />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/tasks" element={<TasksPage />} />
+          <Route path="/blocks" element={<TimeBlocksPage />} />
+          <Route path="/stats" element={<StatsPage />} />
+          <Route path="/settings" element={<SettingsPage user={user} onSignedOut={signedOut} />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Route>
+      </Routes>
+      {showReward && (
+        <DailyReward
+          onDone={(r) => setUser({ ...user, coins: r.totalCoins, dailyReward: { ...user.dailyReward, claimed: true } })}
+          onLater={() => {
+            try {
+              sessionStorage.setItem(laterKey, '1')
+            } catch {
+              /* 저장소 사용 불가 — 이번 화면에서만 닫기 */
+            }
+            setRewardHidden(true)
+          }}
+        />
+      )}
+    </>
   )
 }

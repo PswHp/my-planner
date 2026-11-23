@@ -4,7 +4,7 @@
   try {
     var root = document.documentElement
     var theme = localStorage.getItem('dailumi:theme')
-    if (theme && /^(sky|lavender|peach|mono)$/.test(theme)) root.setAttribute('data-theme', theme)
+    if (theme && /^(forest|sky|lavender|peach|mono)$/.test(theme)) root.setAttribute('data-theme', theme)
     var mode = localStorage.getItem('dailumi:mode')
     if (mode !== 'light' && mode !== 'dark') {
       mode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'

@@ -6,6 +6,7 @@
 import { syncThemeColor } from './mode'
 
 export const THEMES = [
+  { id: 'warm', label: '웜 뉴트럴', desc: '아이보리 + 멀티컬러', swatch: ['#e7b782', '#8dabc4', '#765ea6'], bg: '#faf8f5' },
   { id: 'forest', label: '숲', desc: '차분한 초록', swatch: ['#6bb16d', '#e4f2dc', '#4e7c59'], bg: '#f7f8f3' },
   { id: 'sky', label: '하늘', desc: '맑은 파랑', swatch: ['#6aa5dc', '#e1edf9', '#3a6ea5'], bg: '#f4f7fa' },
   { id: 'lavender', label: '라벤더', desc: '은은한 보라', swatch: ['#9b8ad8', '#ece7fa', '#6a58a6'], bg: '#f7f6fa' },
@@ -15,7 +16,7 @@ export const THEMES = [
 
 export type ThemeId = (typeof THEMES)[number]['id']
 const KEY = 'dailumi:theme'
-const DEFAULT: ThemeId = 'forest'
+const DEFAULT: ThemeId = 'warm'
 
 const isTheme = (v: unknown): v is ThemeId => THEMES.some((t) => t.id === v)
 

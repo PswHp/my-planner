@@ -343,7 +343,9 @@ function TodayTasks({
   return (
     <section className={`card flex flex-col p-5 ${className}`}>
       <h2 className="card-head">
-        <ClipboardIcon />
+        <span className="text-point-blue-ink">
+          <ClipboardIcon />
+        </span>
         {label}
         <span className="ml-auto text-sm font-bold text-brand-ink">
           {done} / {tasks.length} 완료
@@ -362,7 +364,7 @@ function TodayTasks({
               }`}
             >
               <span
-                className={`h-2 w-2 shrink-0 rounded-full ${t.done ? 'bg-line-strong' : 'bg-brand-accent'}`}
+                className={`h-2 w-2 shrink-0 rounded-full ${t.done ? 'bg-line-strong' : 'bg-point-blue'}`}
                 aria-hidden="true"
               />
               <span className={`min-w-0 flex-1 truncate ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
@@ -485,10 +487,12 @@ function TodaySchedule({
   return (
     <section className={`card flex flex-col p-5 ${className}`}>
       <h2 className="card-head">
-        <CalendarIcon />
+        <span className="text-point-orange-ink">
+          <CalendarIcon />
+        </span>
         {label}
         <button
-          className="ml-auto grid h-8 w-8 place-items-center rounded-full bg-brand-soft text-brand transition hover:bg-brand-light/60"
+          className="ml-auto grid h-8 w-8 place-items-center rounded-full bg-point-orange-soft text-point-orange-ink transition hover:brightness-95"
           onClick={onAdd}
           aria-label="일정 추가"
         >
@@ -507,7 +511,7 @@ function TodaySchedule({
             return (
               <li key={e.id} className="relative flex items-center gap-3">
                 <span
-                  className={`z-10 h-[9px] w-[9px] shrink-0 rounded-full ring-4 ring-surface ${past ? 'bg-line-strong' : 'bg-brand-accent'}`}
+                  className={`z-10 h-[9px] w-[9px] shrink-0 rounded-full ring-4 ring-surface ${past ? 'bg-line-strong' : 'bg-point-orange'}`}
                 />
                 <span className={`w-11 shrink-0 text-sm tabular-nums ${past ? 'text-ink-subtle' : 'font-medium text-ink'}`}>{time}</span>
                 <button
@@ -539,10 +543,12 @@ function WeekProgress({ done, total, pct }: { done: number; total: number; pct: 
   return (
     <section className="card relative flex flex-col overflow-hidden p-4 sm:p-5">
       <h2 className="card-head mb-2">
-        <BarsIcon />
+        <span className="text-point-blue-ink">
+          <BarsIcon />
+        </span>
         <span className="truncate">이번 주 진행률</span>
       </h2>
-      <p className="text-[28px] leading-none font-extrabold tracking-tight text-brand sm:text-[32px]">{pct}%</p>
+      <p className="text-[28px] leading-none font-extrabold tracking-tight text-point-blue-ink sm:text-[32px]">{pct}%</p>
       <p className="mt-2 text-xs text-ink-muted">{total ? `완료 ${done}개 / 전체 ${total}개` : '이번 주 마감인 할 일이 없어요'}</p>
       <div
         className="progress mt-3 sm:mr-12"
@@ -552,7 +558,7 @@ function WeekProgress({ done, total, pct }: { done: number; total: number; pct: 
         aria-valuemax={100}
         aria-label="이번 주 진행률"
       >
-        <span style={{ width: `${pct}%` }} />
+        <span className="bg-point-blue" style={{ width: `${pct}%` }} />
       </div>
       <PixelArt sprite={SPROUT} scale={4} className="absolute right-4 bottom-4 hidden sm:block" />
     </section>
@@ -568,7 +574,7 @@ function Streak({ count, doneToday }: { count: number; doneToday: boolean }) {
         <span aria-hidden="true">🔥</span>
         <span className="truncate">연속 달성</span>
       </h2>
-      <span className="chip self-start px-3 py-1 text-base">{count}일째</span>
+      <span className="chip self-start bg-point-orange-soft px-3 py-1 text-base text-point-orange-ink">{count}일째</span>
       <p className="mt-2 text-xs leading-snug text-ink-muted sm:mr-16">{message}</p>
       <PixelArt sprite={MOUND} scale={4} className="absolute right-3 bottom-3 hidden sm:block" />
     </section>

@@ -15,44 +15,62 @@
   --font-sans: 'Pretendard Variable', 'Pretendard', ui-sans-serif, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR',
     'Malgun Gothic', sans-serif;
 
-  /* 배경 · 표면 (Dailumi: 크림 + 자연스러운 초록) */
-  --color-bg: #f7f8f3; /* 페이지 배경 */
-  --color-surface: #fff9f2; /* 카드 · 모달 (크림) */
+  /* 배경 · 표면 (Dailumi 기본: 웜 뉴트럴 — 아이보리 + 웜 그레이) */
+  --color-bg: #faf8f5; /* 페이지 배경 */
+  --color-surface: #fffdfa; /* 카드 · 모달 */
   --color-field: #ffffff; /* 입력창 · 리스트 행 */
-  --color-sidebar: #fffbf5; /* 사이드바 */
-  --color-surface-muted: #f6f3ea; /* 은은한 채움 (배지, 보조 영역) */
-  --color-surface-hover: #eff3e7; /* 호버 배경 */
-  --color-surface-sunken: #eaede1; /* 세그먼트 트랙 등 움푹한 영역 */
-  --color-sky: #e9f4e2; /* 동물 카드 배경 (하늘/들판) */
-  --color-sky-end: #f8fbf1;
+  --color-sidebar: #fcfaf7; /* 사이드바 */
+  --color-surface-muted: #f4f0ea; /* 은은한 채움 (배지, 보조 영역) */
+  --color-surface-hover: #f0ebe4; /* 호버 배경 */
+  --color-surface-sunken: #e9e4dd; /* 보조 배경 · 세그먼트 트랙 */
+  --color-sky: #e9f0f6; /* 동물 카드 배경 (하늘) */
+  --color-sky-end: #faf6ef;
 
-  /* 텍스트 (크림 배경 기준 대비: ink 12:1, muted 5.3:1, subtle 4.9:1) */
-  --color-ink: #2b332d;
-  --color-ink-muted: #5f6b62;
-  --color-ink-subtle: #646f66;
+  /* 텍스트 (배경 대비: ink 13:1, muted 6:1, subtle 5:1) */
+  --color-ink: #2f2b28;
+  --color-ink-muted: #665f58;
+  --color-ink-subtle: #6a635b;
 
   /* 테두리 */
-  --color-line: #e2ecd9;
-  --color-line-strong: #c9d9c0;
+  --color-line: #ebe5dd;
+  --color-line-strong: #d9d1c6;
 
-  /* 포인트 컬러
-     brand        진한 초록 — 버튼 배경, 강조 글자 (흰 글자 대비 4.8:1)
-     brand-accent 메인 초록 #6BB16D — 진행 바, 장식 (글자에는 쓰지 않음)
-     brand-light  준액센트 #A8D5A2 — 보조 장식
+  /* 대표 색 (퍼플) — 주요 버튼, 선택 표시
+     brand        버튼 배경 · 강조 글자 (흰 글자 대비 5.3:1)
+     brand-accent 포인트 퍼플 #A88CC6 — 진행 바, 장식 (글자에는 쓰지 않음)
+     brand-light  보조 장식
      brand-soft   선택된 메뉴 · 배지 배경
-     brand-ink    brand-soft 위 글자 (5.5:1) */
-  --color-brand: #4e7c59;
-  --color-brand-hover: #426b4c;
-  --color-brand-accent: #6bb16d;
-  --color-brand-light: #a8d5a2;
-  --color-brand-soft: #e4f2dc;
-  --color-brand-ink: #2f6b3f;
+     brand-ink    brand-soft 위 글자 (6.6:1) */
+  --color-brand: #765ea6;
+  --color-brand-hover: #654f92;
+  --color-brand-accent: #a88cc6;
+  --color-brand-light: #d3c4e6;
+  --color-brand-soft: #f1ecf8;
+  --color-brand-ink: #5d4789;
+
+  /* 멀티컬러 포인트 — 카드별 아이콘 · 진행 바 · 보상 연출 (모든 테마 공통)
+     *-ink 는 *-soft 위 글자용 (4.7:1 이상) */
+  --color-point-blue: #8dabc4;
+  --color-point-blue-soft: #e8eff5;
+  --color-point-blue-ink: #46698a;
+  --color-point-orange: #e7b782;
+  --color-point-orange-soft: #fbf0e2;
+  --color-point-orange-ink: #93601f;
+  --color-point-purple: #a88cc6;
+  --color-point-purple-soft: #f1ecf8;
+  --color-point-purple-ink: #6d55a0;
+
+  /* 보상 등급 색 */
+  --color-rarity-n: #9a948d;
+  --color-rarity-r: #6f97bd;
+  --color-rarity-sr: #9a7bc4;
+  --color-rarity-ssr: #e0a35e;
   --color-on-brand: #ffffff; /* brand 배경 위 글자 */
 
   /* 반전 색 (툴팁, 선택된 칩) · 화면 가림막 */
-  --color-inverse: #2b332d;
+  --color-inverse: #2f2b28;
   --color-on-inverse: #ffffff;
-  --color-scrim: #1d2420;
+  --color-scrim: #221f1c;
 
   /* 상태 색 */
   --color-danger: #c2413a;
@@ -91,6 +109,11 @@
   /* 픽셀 캐릭터의 느린 숨쉬기 (게임 느낌) */
   --animate-bob: bob 2.4s steps(2, jump-none) infinite;
   --animate-bob-slow: bob 3.2s ease-in-out infinite;
+  /* 일일 보상 연출 */
+  --animate-cat-toss: cat-toss 420ms cubic-bezier(0.3, 1.6, 0.5, 1);
+  --animate-twinkle: twinkle 1.8s ease-in-out infinite;
+  --animate-glow: glow 2s ease-in-out infinite;
+  --animate-reward-pop: reward-pop 520ms cubic-bezier(0.3, 1.6, 0.5, 1) both;
 
   @keyframes pop-in {
     from {
@@ -109,6 +132,34 @@
       transform: translateY(-3px);
     }
   }
+  @keyframes cat-toss {
+    40% {
+      transform: translateY(-14px) rotate(-4deg);
+    }
+  }
+  @keyframes twinkle {
+    0%,
+    100% {
+      opacity: 0.25;
+      transform: scale(0.7);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+  }
+  @keyframes glow {
+    50% {
+      opacity: 0.95;
+      transform: scale(1.08);
+    }
+  }
+  @keyframes reward-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.4) rotate(-12deg);
+    }
+  }
   @keyframes fade-in {
     from {
       opacity: 0;
@@ -118,9 +169,31 @@
 
 
 /* ==========================================================================
-   테마 색 — <html data-theme="..."> 로 전환 (기본 '숲'은 위 @theme 값)
+   테마 색 — <html data-theme="..."> 로 전환 (기본 '웜 뉴트럴'은 위 @theme 값)
    모든 테마는 흰 글자/브랜드 대비 4.5:1 이상으로 맞췄습니다.
    ========================================================================== */
+:root[data-theme='forest'] {
+  /* 숲 (이전 기본 디자인) */
+  --color-bg: #f7f8f3;
+  --color-surface: #fff9f2;
+  --color-sidebar: #fffbf5;
+  --color-surface-muted: #f6f3ea;
+  --color-surface-hover: #eff3e7;
+  --color-surface-sunken: #eaede1;
+  --color-sky: #e9f4e2;
+  --color-sky-end: #f8fbf1;
+  --color-ink: #2b332d;
+  --color-ink-muted: #5f6b62;
+  --color-ink-subtle: #646f66;
+  --color-line: #e2ecd9;
+  --color-line-strong: #c9d9c0;
+  --color-brand: #4e7c59;
+  --color-brand-hover: #426b4c;
+  --color-brand-accent: #6bb16d;
+  --color-brand-light: #a8d5a2;
+  --color-brand-soft: #e4f2dc;
+  --color-brand-ink: #2f6b3f;
+}
 :root[data-theme='sky'] {
   /* 하늘 */
   --color-bg: #f4f7fa;
@@ -204,23 +277,24 @@
    ========================================================================== */
 :root[data-mode='dark'] {
   color-scheme: dark;
-  --color-bg: #151b17;
-  --color-surface: #1d2420;
-  --color-field: #232b26;
-  --color-sidebar: #19201c;
-  --color-surface-muted: #232b26;
-  --color-surface-hover: #2a332d;
-  --color-surface-sunken: #111612;
-  --color-sky: #1c2a36; /* 밤하늘 */
-  --color-sky-end: #22312a;
-  --color-ink: #e7ece6;
-  --color-ink-muted: #b3bdb4;
-  --color-ink-subtle: #98a39a;
-  --color-line: #2e3832;
-  --color-line-strong: #3d4a42;
-  --color-on-brand: #14201a;
-  --color-inverse: #e7ece6;
-  --color-on-inverse: #151b17;
+  /* 기본: 따뜻한 어두운 회색 (순수 검정 아님) */
+  --color-bg: #1b1917;
+  --color-surface: #24211f;
+  --color-field: #2b2825;
+  --color-sidebar: #201e1c;
+  --color-surface-muted: #2b2825;
+  --color-surface-hover: #332f2b;
+  --color-surface-sunken: #161412;
+  --color-sky: #1f2833; /* 밤하늘 */
+  --color-sky-end: #2a2622;
+  --color-ink: #ede8e2;
+  --color-ink-muted: #bdb5ab;
+  --color-ink-subtle: #a39b91;
+  --color-line: #363230;
+  --color-line-strong: #4a4440;
+  --color-on-brand: #1e1828;
+  --color-inverse: #ede8e2;
+  --color-on-inverse: #1b1917;
   --color-scrim: #000000;
   --color-danger: #f08a82;
   --color-danger-hover: #f4a29b;
@@ -230,10 +304,43 @@
   --color-warning: #e8b75a;
   --color-warning-soft: #3a2f17;
   --color-sunday: #f0857e;
+  --color-point-blue: #8dabc4;
+  --color-point-blue-soft: #22303b;
+  --color-point-blue-ink: #a9c3d8;
+  --color-point-orange: #e7b782;
+  --color-point-orange-soft: #3a2e20;
+  --color-point-orange-ink: #efc796;
+  --color-point-purple: #a88cc6;
+  --color-point-purple-soft: #2f2840;
+  --color-point-purple-ink: #d4c6ec;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 14px -6px rgb(0 0 0 / 0.4);
   --shadow-raised: 0 2px 6px rgb(0 0 0 / 0.35), 0 1px 2px rgb(0 0 0 / 0.3);
   --shadow-pop: 0 18px 44px -12px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.35);
-  /* 숲 (기본) */
+  /* 웜 뉴트럴 (기본) — 퍼플 */
+  --color-brand: #b9a3dc;
+  --color-brand-hover: #c8b6e4;
+  --color-brand-accent: #a88cc6;
+  --color-brand-light: #4f4366;
+  --color-brand-soft: #2f2840;
+  --color-brand-ink: #d4c6ec;
+}
+:root[data-mode='dark'][data-theme='forest'] {
+  /* 숲: 차분한 어두운 녹회색 */
+  --color-bg: #151b17;
+  --color-surface: #1d2420;
+  --color-field: #232b26;
+  --color-sidebar: #19201c;
+  --color-surface-muted: #232b26;
+  --color-surface-hover: #2a332d;
+  --color-surface-sunken: #111612;
+  --color-sky: #1c2a36;
+  --color-sky-end: #22312a;
+  --color-ink: #e7ece6;
+  --color-ink-muted: #b3bdb4;
+  --color-ink-subtle: #98a39a;
+  --color-line: #2e3832;
+  --color-line-strong: #3d4a42;
+  --color-on-brand: #14201a;
   --color-brand: #7cc285;
   --color-brand-hover: #94cf9b;
   --color-brand-accent: #6bb16d;
@@ -436,5 +543,58 @@
   }
   .progress > span {
     @apply block h-full rounded-full bg-brand-accent transition-[width] duration-500;
+  }
+}
+
+/* ==========================================================================
+   일일 보상 — 선물 상자 낙하 (포물선 = 가로 등속 이동 + 세로 가속 이동)
+   transform / opacity 만 사용
+   ========================================================================== */
+.gift-fall {
+  animation: gift-x var(--dur) linear var(--delay) both;
+}
+.gift-fall-y {
+  animation: gift-y var(--dur) linear var(--delay) both;
+}
+@keyframes gift-x {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(calc(-50% + var(--x)));
+  }
+}
+@keyframes gift-y {
+  0% {
+    opacity: 0;
+    transform: translateY(0) rotate(0deg) scale(0.6);
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+  }
+  10% {
+    opacity: 1;
+  }
+  28% {
+    transform: translateY(var(--up)) rotate(calc(var(--rot) * 0.3)) scale(1);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.55);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(75vh) rotate(var(--rot)) scale(1);
+  }
+}
+.confetti {
+  animation: confetti 900ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+@keyframes confetti {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--cx)), calc(-50% + var(--cy))) rotate(var(--cr)) scale(1);
   }
 }
