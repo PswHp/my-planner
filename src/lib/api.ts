@@ -78,6 +78,8 @@ export interface CalendarEvent {
   end_at: string
   all_day: 0 | 1
   color: Color
+  /** 반복 일정 묶음 ID (일괄 추가한 일정만) */
+  series_id?: string | null
 }
 
 export interface Task {

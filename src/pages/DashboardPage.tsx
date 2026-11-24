@@ -18,7 +18,7 @@ import { BUSH, CAT, CLOUD, FLOWER, FLOWER_PINK, GRASS, HEART, MOUND, PixelArt, P
 import { api, COLOR_HEX, type CalendarEvent, type Task, type User } from '../lib/api'
 import { fmt, parseDate, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
 import { PREVIEW_PET } from '../lib/preview'
-import { EventModal } from './CalendarPage'
+import { EventModal } from '../components/EventModal'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 

@@ -10,14 +10,11 @@ import {
 } from 'date-fns'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { ColorPicker } from '../components/ColorPicker'
-import { ConfirmDialog } from '../components/ConfirmDialog'
-import { DateField, TimeField } from '../components/DateTimePicker'
-import { ChevronLeft, ChevronRight, PlusIcon } from '../components/Icons'
+import { EventModal } from '../components/EventModal'
+import { ChevronLeft, ChevronRight, PlusIcon, RepeatIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
-import { Field, Modal } from '../components/Modal'
-import { api, COLOR_HEX, type CalendarEvent, type Color, type Task } from '../lib/api'
-import { fmt, formatDuration, parseDate, timeToMin, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
+import { api, COLOR_HEX, type CalendarEvent, type Task } from '../lib/api'
+import { fmt, parseDate, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -216,7 +213,15 @@ export default function CalendarPage() {
                     <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ background: COLOR_HEX[ev.color] }} />
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium">{ev.title}</span>
-                      <span className="block text-xs text-ink-muted">{eventTimeLabel(ev)}</span>
+                      <span className="flex items-center gap-1 text-xs text-ink-muted">
+                        {eventTimeLabel(ev)}
+                        {ev.series_id && (
+                          <span className="inline-flex items-center gap-0.5 text-brand-ink" title="반복 일정">
+                            <RepeatIcon size={12} />
+                            반복
+                          </span>
+                        )}
+                      </span>
                     </span>
                   </button>
                 </li>
@@ -329,178 +334,4 @@ function eventTimeLabel(ev: CalendarEvent) {
   if (ev.all_day) return sameDay ? '종일' : `종일 · ~${fmt(parseDate(ev.end_at), 'M/d')}`
   if (sameDay) return `${ev.start_at.slice(11)} – ${ev.end_at.slice(11)}`
   return `${ev.start_at.slice(11)} – ${fmt(parseDate(ev.end_at), 'M/d')} ${ev.end_at.slice(11)}`
-}
-
-export function EventModal({
-  initial,
-  onClose,
-  onSaved,
-}: {
-  initial: Partial<CalendarEvent>
-  onClose: () => void
-  onSaved: () => void
-}) {
-  const [title, setTitle] = useState(initial.title ?? '')
-  const [allDay, setAllDay] = useState(!!initial.all_day)
-  const [startDate, setStartDate] = useState(initial.start_at!.slice(0, 10))
-  const [startTime, setStartTime] = useState(initial.all_day ? '09:00' : initial.start_at!.slice(11))
-  const [endDate, setEndDate] = useState(initial.end_at!.slice(0, 10))
-  const [endTime, setEndTime] = useState(initial.all_day ? '10:00' : initial.end_at!.slice(11))
-  const [color, setColor] = useState<Color>(initial.color ?? 'blue')
-  const [description, setDescription] = useState(initial.description ?? '')
-
-  // 일정 길이(분) — 시작을 옮기면 길이를 유지한 채 종료도 함께 이동
-  const at = (d: string, t: string) => parseDate(d).getTime() + timeToMin(t) * 60_000
-  const duration = Math.round((at(endDate, endTime) - at(startDate, startTime)) / 60_000)
-  const setEndFrom = (ms: number) => {
-    const s = toDateTimeStr(new Date(ms))
-    setEndDate(s.slice(0, 10))
-    setEndTime(s.slice(11))
-  }
-  const moveStart = (d: string, t: string) => {
-    if (allDay) {
-      const span = Math.round((parseDate(endDate).getTime() - parseDate(startDate).getTime()) / 86_400_000)
-      setStartDate(d)
-      setEndDate(toDateStr(addDays(parseDate(d), Math.max(0, span))))
-      return
-    }
-    const keep = duration > 0 ? duration : 60
-    setStartDate(d)
-    setStartTime(t)
-    setEndFrom(at(d, t) + keep * 60_000)
-  }
-  const setLength = (min: number) => setEndFrom(at(startDate, startTime) + min * 60_000)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const save = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const start_at = `${startDate}T${allDay ? '00:00' : startTime}`
-    const end_at = `${endDate}T${allDay ? '23:59' : endTime}`
-    if (end_at < start_at) return setError('종료 시각이 시작 시각보다 빠릅니다.')
-    setSaving(true)
-    try {
-      const body = { title, start_at, end_at, all_day: allDay, color, description }
-      if (initial.id) await api.patch(`/events/${initial.id}`, body)
-      else await api.post('/events', body)
-      onSaved()
-    } catch (err) {
-      setError((err as Error).message)
-      setSaving(false)
-    }
-  }
-
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
-
-  const remove = async () => {
-    if (!initial.id) return
-    await api.del(`/events/${initial.id}`)
-    onSaved()
-  }
-
-  return (
-    <>
-      {confirmingDelete && (
-        <ConfirmDialog
-          title="이 일정을 삭제할까요?"
-          message={`${title.trim() || '제목 없음'} · ${fmt(parseDate(startDate), 'M월 d일 (EEE)')} ${allDay ? '종일' : startTime}`}
-          onConfirm={remove}
-          onCancel={() => setConfirmingDelete(false)}
-        />
-      )}
-      <Modal
-        title={initial.id ? '일정 수정' : '새 일정'}
-        onClose={onClose}
-        footer={
-          <>
-            {initial.id && (
-              <button type="button" className="btn-danger" onClick={() => setConfirmingDelete(true)}>
-                삭제
-              </button>
-            )}
-            <button type="button" className="btn-ghost ml-auto" onClick={onClose}>
-              취소
-            </button>
-            <button type="submit" form="event-form" className="btn-primary" disabled={saving || !title.trim()}>
-              저장
-            </button>
-          </>
-        }
-      >
-        <form id="event-form" onSubmit={save} className="space-y-4">
-          <Field label="제목">
-            <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus required />
-          </Field>
-          <div className="space-y-3 rounded-card bg-surface-muted p-3.5">
-            <label className="flex min-h-8 cursor-pointer items-center justify-between text-sm font-medium">
-              종일
-              <input
-                type="checkbox"
-                className="h-[18px] w-[18px] cursor-pointer"
-                checked={allDay}
-                onChange={(e) => setAllDay(e.target.checked)}
-              />
-            </label>
-            <div>
-              <p className="mb-1.5 text-xs font-semibold text-ink-muted">시작</p>
-              <div className="flex gap-2">
-                <div className="min-w-0 flex-1">
-                  <DateField label="시작 날짜" value={startDate} onChange={(v) => moveStart(v, startTime)} />
-                </div>
-                {!allDay && (
-                  <div className="w-[8.5rem] shrink-0">
-                    <TimeField label="시작 시간" value={startTime} onChange={(v) => moveStart(startDate, v)} />
-                  </div>
-                )}
-              </div>
-            </div>
-            <div>
-              <p className="mb-1.5 flex items-center justify-between text-xs font-semibold text-ink-muted">
-                종료
-                {!allDay && duration > 0 && (
-                  <span className="font-medium text-ink-subtle">{formatDuration(duration)}</span>
-                )}
-              </p>
-              <div className="flex gap-2">
-                <div className="min-w-0 flex-1">
-                  <DateField label="종료 날짜" value={endDate} min={startDate} onChange={setEndDate} />
-                </div>
-                {!allDay && (
-                  <div className="w-[8.5rem] shrink-0">
-                    <TimeField label="종료 시간" value={endTime} onChange={setEndTime} />
-                  </div>
-                )}
-              </div>
-            </div>
-            {!allDay && (
-              <div className="flex flex-wrap gap-1.5" role="group" aria-label="일정 길이 빠르게 정하기">
-                {[30, 60, 90, 120, 180].map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setLength(m)}
-                    aria-pressed={duration === m}
-                    className={`min-h-8 cursor-pointer rounded-full px-3 text-xs font-semibold transition active:scale-95 ${
-                      duration === m
-                        ? 'bg-brand text-on-brand'
-                        : 'bg-field text-ink-muted ring-1 ring-line hover:bg-brand-soft hover:text-brand-ink'
-                    }`}
-                  >
-                    {formatDuration(m)}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <Field label="색상">
-            <ColorPicker value={color} onChange={setColor} />
-          </Field>
-          <Field label="메모">
-            <textarea className="input min-h-20" value={description} onChange={(e) => setDescription(e.target.value)} />
-          </Field>
-          {error && <p className="alert-error">{error}</p>}
-        </form>
-      </Modal>
-    </>
-  )
 }
