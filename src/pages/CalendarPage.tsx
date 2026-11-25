@@ -11,7 +11,8 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { EventModal } from '../components/EventModal'
-import { ChevronLeft, ChevronRight, PlusIcon, RepeatIcon } from '../components/Icons'
+import { useDataChanged, useQuickAddDate } from '../lib/quickAdd'
+import { ChevronLeft, ChevronRight, RepeatIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { api, COLOR_HEX, type CalendarEvent, type Task } from '../lib/api'
 import { fmt, parseDate, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
@@ -44,6 +45,8 @@ export default function CalendarPage() {
   }, [from, to])
 
   useEffect(load, [load])
+  useDataChanged(load) // 상단 바에서 추가하면 다시 불러오기
+  useQuickAddDate(selected) // 상단 바 '+ 추가'의 기준 날짜
 
   // 날짜별로 일정/마감 할 일 묶기 (여러 날 일정은 걸친 모든 날에 표시)
   const byDay = useMemo(() => {
@@ -111,9 +114,6 @@ export default function CalendarPage() {
             <ChevronRight />
           </button>
         </div>
-        <button className="btn-primary" onClick={() => openNew(selected)}>
-          <PlusIcon /> 일정
-        </button>
       </PageHeader>
 
       {error && <p className="alert-error mb-4">{error}</p>}
@@ -189,15 +189,9 @@ export default function CalendarPage() {
         {/* 선택한 날짜 상세: 일정 + 할 일 */}
         <div className="h-fit space-y-4">
           <div className="card p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="section-title">
-                {fmt(parseDate(selected), 'M월 d일 (EEE)')}{' '}
-                <span className="text-sm font-normal text-ink-muted">일정</span>
-              </h2>
-              <button className="btn-ghost btn-sm" onClick={() => openNew(selected)}>
-                <PlusIcon /> 추가
-              </button>
-            </div>
+            <h2 className="section-title mb-3">
+              {fmt(parseDate(selected), 'M월 d일 (EEE)')} <span className="text-sm font-normal text-ink-muted">일정</span>
+            </h2>
             {selectedItems.events.length === 0 && (
               <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">
                 일정이 없습니다

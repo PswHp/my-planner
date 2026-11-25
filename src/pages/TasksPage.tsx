@@ -1,5 +1,6 @@
 import { addDays } from 'date-fns'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useDataChanged } from '../lib/quickAdd'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateField } from '../components/DateTimePicker'
 import { TrashIcon } from '../components/Icons'
@@ -39,6 +40,7 @@ export default function TasksPage() {
       .catch((e) => setError(e.message))
   }, [])
   useEffect(load, [load])
+  useDataChanged(load) // 상단 바에서 추가하면 다시 불러오기
 
   const today = todayStr()
 

@@ -1,5 +1,6 @@
 import { addDays } from 'date-fns'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent } from 'react'
+import { useDataChanged } from '../lib/quickAdd'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateField, TimeField } from '../components/DateTimePicker'
 import { ChevronLeft, ChevronRight, PlusIcon } from '../components/Icons'
@@ -61,6 +62,7 @@ export default function TimeBlocksPage() {
       .catch((e) => setError(e.message))
   }, [date])
   useEffect(load, [load])
+  useDataChanged(load) // 상단 바에서 추가하면 다시 불러오기
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000)

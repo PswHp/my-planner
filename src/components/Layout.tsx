@@ -23,6 +23,7 @@ import {
 } from './Icons'
 import { GRASS, Logo, PixelStrip } from './Pixel'
 import { PullCord } from './PullCord'
+import { TopBar } from './TopBar'
 import { switchMode, useMode } from '../lib/mode'
 
 /**
@@ -99,7 +100,9 @@ export function Layout({ user, onLogout }: { user: User; onLogout: () => void })
     <div className="flex min-h-dvh">
       <Sidebar user={user} />
 
-      <main className="min-w-0 flex-1 px-4 pt-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 md:px-8 md:pt-8 md:pb-10">
+      <main className="min-w-0 flex-1 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 md:px-8 md:pb-10">
+        {/* 상단 고정 바: 오늘 날짜 + 추가(일정 / 할 일) */}
+        <TopBar />
         <div className="mx-auto w-full max-w-6xl">
           <Outlet />
         </div>

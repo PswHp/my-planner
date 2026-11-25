@@ -11,7 +11,6 @@ import {
   HeartIcon,
   InfoIcon,
   PencilIcon,
-  PlusIcon,
   ShirtIcon,
 } from '../components/Icons'
 import { BUSH, CAT, CLOUD, FLOWER, FLOWER_PINK, GRASS, HEART, MOUND, PixelArt, PixelStrip, SPROUT, TREE } from '../components/Pixel'
@@ -19,6 +18,7 @@ import { api, COLOR_HEX, type CalendarEvent, type Task, type User } from '../lib
 import { fmt, parseDate, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
 import { PREVIEW_PET } from '../lib/preview'
 import { EventModal } from '../components/EventModal'
+import { useDataChanged, useQuickAddDate } from '../lib/quickAdd'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -57,6 +57,8 @@ export default function DashboardPage({ user }: { user: User }) {
   }, [from, to])
 
   useEffect(load, [load])
+  useDataChanged(load) // 상단 바에서 추가하면 다시 불러오기
+  useQuickAddDate(selected) // 상단 바 '+ 추가'의 기준 날짜
 
   /** 날짜 선택 — 다른 달이면 달력도 그 달로 이동 */
   const select = (d: string) => {
@@ -118,15 +120,6 @@ export default function DashboardPage({ user }: { user: User }) {
     return { count, doneToday }
   }, [tasks])
 
-  const openNewEvent = () =>
-    setEditing({
-      title: '',
-      start_at: `${selected}T09:00`,
-      end_at: `${selected}T10:00`,
-      all_day: 0,
-      color: 'green',
-      description: '',
-    })
 
   return (
     <div>
@@ -160,7 +153,6 @@ export default function DashboardPage({ user }: { user: User }) {
           date={selected}
           today={today}
           events={dayEvents}
-          onAdd={openNewEvent}
           onOpen={setEditing}
         />
 
@@ -471,14 +463,12 @@ function TodaySchedule({
   date,
   today,
   events,
-  onAdd,
   onOpen,
 }: {
   className?: string
   date: string
   today: string
   events: CalendarEvent[]
-  onAdd: () => void
   onOpen: (e: CalendarEvent) => void
 }) {
   const now = toDateTimeStr(new Date())
@@ -491,13 +481,6 @@ function TodaySchedule({
           <CalendarIcon />
         </span>
         {label}
-        <button
-          className="ml-auto grid h-8 w-8 place-items-center rounded-full bg-point-orange-soft text-point-orange-ink transition hover:brightness-95"
-          onClick={onAdd}
-          aria-label="일정 추가"
-        >
-          <PlusIcon />
-        </button>
       </h2>
 
       {events.length === 0 ? (
