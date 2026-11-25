@@ -16,7 +16,18 @@ export const PORT = 8799
 export const BASE = `http://127.0.0.1:${PORT}`
 
 /** setup.ts 가 미리 만들어 두는 테스트 사용자들 (테스트 파일당 하나씩) */
-export const TEST_USERS = ['events', 'blocks', 'eventSeries', 'blockSeries', 'tasks', 'misc', 'intruder', 'leaver'] as const
+export const TEST_USERS = [
+  'events',
+  'blocks',
+  'eventSeries',
+  'blockSeries',
+  'tasks',
+  'misc',
+  'intruder',
+  'leaver',
+  'returner',
+  'keeper',
+] as const
 export type TestUser = (typeof TEST_USERS)[number]
 
 export const tokenOf = (user: TestUser) => `test-session-token-${user}`

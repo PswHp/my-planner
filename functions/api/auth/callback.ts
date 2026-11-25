@@ -1,5 +1,6 @@
 import { appOrigin, cookieName, isSecure, randomToken, SESSION_DAYS, sha256 } from '../../_lib/auth'
 import type { Handler } from '../../_lib/env'
+import { purgeDeletedUsers } from '../../_lib/deletedUsers'
 import { getCookie, setCookie } from '../../_lib/http'
 
 interface GoogleClaims {
@@ -93,8 +94,9 @@ export const onRequestGet: Handler = async ({ env, request }) => {
       claims.sub,
       now + SESSION_DAYS * 86400_000,
     ),
-    // 만료 세션 정리 + 한 사용자당 최근 세션 20개만 유지
+    // 만료 세션 · 보관 기간이 지난 탈퇴 기록 정리 + 한 사용자당 최근 세션 20개만 유지
     env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(now),
+    purgeDeletedUsers(env.DB),
     env.DB.prepare(
       `DELETE FROM sessions WHERE user_id = ? AND id NOT IN
          (SELECT id FROM sessions WHERE user_id = ? ORDER BY expires_at DESC LIMIT 20)`,
