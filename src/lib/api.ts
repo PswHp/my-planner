@@ -114,6 +114,8 @@ export interface TimeBlock {
   title: string
   category: Category
   task_id: string | null
+  /** 반복 블록 묶음 ID (일괄 추가한 블록만) */
+  series_id?: string | null
 }
 
 export interface Stats {

@@ -1,9 +1,11 @@
 import { addDays } from 'date-fns'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent } from 'react'
 import { useDataChanged } from '../lib/quickAdd'
+import { ChoiceDialog } from '../components/ChoiceDialog'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { ALL_DAYS, RepeatDaysPicker, RepeatSummary, repeatDates, repeatProblem } from '../components/RepeatFields'
 import { DateField, TimeField } from '../components/DateTimePicker'
-import { ChevronLeft, ChevronRight, PlusIcon } from '../components/Icons'
+import { ChevronLeft, ChevronRight, PlusIcon, RepeatIcon, TrashIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
 import { api, CATEGORIES, CATEGORY_INFO, COLOR_HEX, type Category, type Task, type TimeBlock } from '../lib/api'
@@ -201,6 +203,7 @@ export default function TimeBlocksPage() {
                       {height > 30 && (
                         <div className="truncate text-ink-muted">
                           {minToTime(b.start_min)}–{minToTime(b.end_min)} · {CATEGORY_INFO[b.category].label}
+                          {b.series_id && ' · ↻ 반복'}
                         </div>
                       )}
                     </button>
@@ -256,7 +259,10 @@ export default function TimeBlocksPage() {
               <ul className="max-h-72 space-y-1 overflow-y-auto">
                 {openTasks.map((t) => (
                   <li key={t.id}>
-                    <button onClick={() => blockFromTask(t)} className="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-control px-2 py-2 text-left text-sm transition hover:bg-surface-hover">
+                    <button
+                      onClick={() => blockFromTask(t)}
+                      className="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-control px-2 py-2 text-left text-sm transition hover:bg-surface-hover"
+                    >
                       <span className="text-ink-subtle">＋</span>
                       <span className="flex-1 truncate">{t.title}</span>
                       {t.due_date && <span className="text-xs text-ink-subtle">{fmt(parseDate(t.due_date), 'M/d')}</span>}
@@ -284,17 +290,9 @@ export default function TimeBlocksPage() {
   )
 }
 
-function BlockModal({
-  draft,
-  tasks,
-  onClose,
-  onSaved,
-}: {
-  draft: Draft
-  tasks: Task[]
-  onClose: () => void
-  onSaved: () => void
-}) {
+function BlockModal({ draft, tasks, onClose, onSaved }: { draft: Draft; tasks: Task[]; onClose: () => void; onSaved: () => void }) {
+  const isNew = !draft.id
+  const seriesId = draft.series_id ?? null
   const [title, setTitle] = useState(draft.title ?? '')
   const [category, setCategory] = useState<Category>(draft.category ?? 'work')
   const [start, setStart] = useState(minToTime(draft.start_min))
@@ -307,104 +305,248 @@ function BlockModal({
   }
   const [taskId, setTaskId] = useState(draft.task_id ?? '')
   const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  const save = async (e: FormEvent) => {
-    e.preventDefault()
+  // 반복 (새 블록에서만)
+  const [repeat, setRepeat] = useState(false)
+  const [from, setFrom] = useState(draft.date)
+  const [until, setUntil] = useState(() => toDateStr(addDays(parseDate(draft.date), 27)))
+  const [days, setDays] = useState<Set<number>>(ALL_DAYS)
+  const { dates, span } = useMemo(() => repeatDates(from, until, days), [from, until, days])
+  const problem = repeat ? repeatProblem(days, span, dates.length) : null
+
+  const [askSaveScope, setAskSaveScope] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+
+  const fields = () => {
     const start_min = timeToMin(start)
     const endRaw = timeToMin(end)
     const end_min = endRaw === 0 ? 1440 : endRaw // 00:00 종료 = 자정
-    if (end_min <= start_min) return setError('종료 시각은 시작 시각보다 뒤여야 합니다.')
-    const body = { date: draft.date, title, category, start_min, end_min, task_id: taskId || null }
+    return { title, category, start_min, end_min, task_id: taskId || null }
+  }
+
+  const run = async (fn: () => Promise<unknown>) => {
+    setSaving(true)
+    setError(null)
     try {
-      if (draft.id) await api.patch(`/blocks/${draft.id}`, body)
-      else await api.post('/blocks', body)
+      await fn()
       onSaved()
     } catch (err) {
       setError((err as Error).message)
+      setSaving(false)
     }
   }
 
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
-
-  const remove = async () => {
-    if (!draft.id) return
-    await api.del(`/blocks/${draft.id}`)
-    onSaved()
+  const save = async (e: FormEvent) => {
+    e.preventDefault()
+    const body = fields()
+    if (body.end_min <= body.start_min) return setError('종료 시각은 시작 시각보다 뒤여야 합니다.')
+    if (repeat) {
+      if (problem) return setError(problem)
+      return run(() => api.post('/blocks/series', { ...body, from, until, days: [...days] }))
+    }
+    if (seriesId) return setAskSaveScope(true)
+    return run(() =>
+      isNew ? api.post('/blocks', { ...body, date: draft.date }) : api.patch(`/blocks/${draft.id}`, { ...body, date: draft.date }),
+    )
   }
+
+  const label = `${title.trim() || '제목 없음'} · ${fmt(parseDate(draft.date), 'M월 d일 (EEE)')} ${start}–${end}`
 
   return (
     <>
-    {confirmingDelete && (
-      <ConfirmDialog
-        title="이 블록을 삭제할까요?"
-        message={`${title.trim() || '제목 없음'} · ${start}–${end}`}
-        onConfirm={remove}
-        onCancel={() => setConfirmingDelete(false)}
-      />
-    )}
-    <Modal
-      title={draft.id ? '블록 수정' : '새 타임 블록'}
-      onClose={onClose}
-      footer={
-        <>
-          {draft.id && (
-            <button type="button" className="btn-danger" onClick={() => setConfirmingDelete(true)}>
-              삭제
-            </button>
-          )}
-          <button type="button" className="btn-ghost ml-auto" onClick={onClose}>
-            취소
-          </button>
-          <button type="submit" form="block-form" className="btn-primary" disabled={!title.trim()}>
-            저장
-          </button>
-        </>
-      }
-    >
-      <form id="block-form" onSubmit={save} className="space-y-4">
-        <Field label="제목">
-          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="시작">
-            <TimeField label="시작 시간" value={start} onChange={moveStart} minuteStep={15} />
-          </Field>
-          <Field label="종료">
-            <TimeField label="종료 시간" value={end} onChange={setEnd} minuteStep={15} />
-          </Field>
-        </div>
-        <Field label="카테고리">
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setCategory(c)}
-                aria-pressed={category === c}
-                className={`flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition duration-150 ${
-                  category === c ? 'border-inverse bg-inverse text-on-inverse' : 'border-line hover:bg-surface-hover'
-                }`}
-              >
-                <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLOR_HEX[CATEGORY_INFO[c].color] }} />
-                {CATEGORY_INFO[c].label}
+      {askSaveScope && (
+        <ChoiceDialog
+          title="반복 블록을 수정할까요?"
+          icon={<RepeatIcon size={22} />}
+          message={
+            <>
+              <b className="font-semibold text-ink">반복 블록 전체</b>를 고르면 각 블록의 날짜는 그대로 두고
+              <br />
+              제목 · 시간 · 카테고리 · 연결된 할 일만 모두 바꿔요.
+            </>
+          }
+          choices={[
+            {
+              label: '이 블록만 수정',
+              variant: 'secondary',
+              onSelect: async () => {
+                await api.patch(`/blocks/${draft.id}`, { ...fields(), date: draft.date })
+                onSaved()
+              },
+            },
+            {
+              label: '반복 블록 전체 수정',
+              variant: 'primary',
+              onSelect: async () => {
+                await api.patch(`/blocks/series/${seriesId}`, fields())
+                onSaved()
+              },
+            },
+          ]}
+          onCancel={() => setAskSaveScope(false)}
+        />
+      )}
+      {confirmingDelete &&
+        (seriesId ? (
+          <ChoiceDialog
+            tone="danger"
+            title="반복 블록을 삭제할까요?"
+            icon={<TrashIcon />}
+            message={label}
+            choices={[
+              {
+                label: '이 블록만 삭제',
+                variant: 'secondary',
+                onSelect: async () => {
+                  await api.del(`/blocks/${draft.id}`)
+                  onSaved()
+                },
+              },
+              {
+                label: '반복 블록 전체 삭제',
+                variant: 'danger',
+                onSelect: async () => {
+                  await api.del(`/blocks/series/${seriesId}`)
+                  onSaved()
+                },
+              },
+            ]}
+            onCancel={() => setConfirmingDelete(false)}
+          />
+        ) : (
+          <ConfirmDialog
+            title="이 블록을 삭제할까요?"
+            message={label}
+            onConfirm={async () => {
+              await api.del(`/blocks/${draft.id}`)
+              onSaved()
+            }}
+            onCancel={() => setConfirmingDelete(false)}
+          />
+        ))}
+      <Modal
+        title={isNew ? '새 타임 블록' : '블록 수정'}
+        onClose={onClose}
+        footer={
+          <>
+            {!isNew && (
+              <button type="button" className="btn-danger" onClick={() => setConfirmingDelete(true)}>
+                삭제
               </button>
-            ))}
+            )}
+            <button type="button" className="btn-ghost ml-auto" onClick={onClose}>
+              취소
+            </button>
+            <button type="submit" form="block-form" className="btn-primary" disabled={saving || !title.trim() || (repeat && !!problem)}>
+              {repeat ? (dates.length > 0 && !problem ? `${dates.length}개 추가` : '추가') : '저장'}
+            </button>
+          </>
+        }
+      >
+        <form id="block-form" onSubmit={save} className="space-y-4">
+          <Field label="제목">
+            <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
+          </Field>
+
+          {seriesId && (
+            <p className="flex items-center gap-1.5 rounded-control bg-brand-soft px-3 py-2 text-xs font-medium text-brand-ink">
+              <RepeatIcon size={16} /> 반복 블록에 속한 블록이에요
+            </p>
+          )}
+
+          <div className="space-y-3 rounded-card bg-surface-muted p-3.5">
+            {isNew && (
+              <label className="flex min-h-8 cursor-pointer items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  className="h-[18px] w-[18px] cursor-pointer"
+                  checked={repeat}
+                  onChange={(e) => setRepeat(e.target.checked)}
+                />
+                반복 (기간 일괄 추가)
+              </label>
+            )}
+
+            {repeat && (
+              <>
+                <div>
+                  <p className="mb-1.5 text-xs font-semibold text-ink-muted">반복 기간</p>
+                  <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <DateField
+                        label="반복 시작일"
+                        value={from}
+                        onChange={(v) => {
+                          setFrom(v)
+                          if (until < v) setUntil(v)
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm text-ink-subtle" aria-hidden="true">
+                      ~
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <DateField label="반복 종료일" value={until} min={from} onChange={setUntil} />
+                    </div>
+                  </div>
+                </div>
+                <RepeatDaysPicker days={days} onChange={setDays} />
+              </>
+            )}
+
+            <div>
+              <p className="mb-1.5 text-xs font-semibold text-ink-muted">
+                {repeat ? '시간' : `시간 · ${fmt(parseDate(draft.date), 'M월 d일 (EEE)')}`}
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <TimeField label="시작 시간" value={start} onChange={moveStart} minuteStep={15} />
+                </div>
+                <span className="text-sm text-ink-subtle" aria-hidden="true">
+                  ~
+                </span>
+                <div className="min-w-0 flex-1">
+                  <TimeField label="종료 시간" value={end} onChange={setEnd} minuteStep={15} />
+                </div>
+              </div>
+            </div>
+
+            {repeat && <RepeatSummary from={from} until={until} count={dates.length} problem={problem} noun="블록" />}
           </div>
-        </Field>
-        <Field label="연결된 할 일 (선택)">
-          <select className="input" value={taskId} onChange={(e) => setTaskId(e.target.value)}>
-            <option value="">없음</option>
-            {draft.task_id && !tasks.some((t) => t.id === draft.task_id) && <option value={draft.task_id}>(완료된 할 일)</option>}
-            {tasks.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.title}
-              </option>
-            ))}
-          </select>
-        </Field>
-        {error && <p className="alert-error">{error}</p>}
-      </form>
-    </Modal>
+
+          <Field label="카테고리">
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCategory(c)}
+                  aria-pressed={category === c}
+                  className={`flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition duration-150 ${
+                    category === c ? 'border-inverse bg-inverse text-on-inverse' : 'border-line hover:bg-surface-hover'
+                  }`}
+                >
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLOR_HEX[CATEGORY_INFO[c].color] }} />
+                  {CATEGORY_INFO[c].label}
+                </button>
+              ))}
+            </div>
+          </Field>
+          <Field label="연결된 할 일 (선택)">
+            <select className="input" value={taskId} onChange={(e) => setTaskId(e.target.value)}>
+              <option value="">없음</option>
+              {draft.task_id && !tasks.some((t) => t.id === draft.task_id) && <option value={draft.task_id}>(완료된 할 일)</option>}
+              {tasks.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </select>
+          </Field>
+          {error && <p className="alert-error">{error}</p>}
+        </form>
+      </Modal>
     </>
   )
 }

@@ -47,6 +47,13 @@ export const blockResource: Resource = {
   maxRows: 20_000,
 }
 
+/** 반복 블록의 공통 내용 (날짜 제외) — POST/PATCH /api/blocks/series */
+export const blockSeriesResource: Resource = {
+  ...blockResource,
+  fields: Object.fromEntries(Object.entries(blockResource.fields).filter(([k]) => k !== 'date')),
+  required: ['start_min', 'end_min', 'title'],
+}
+
 /** 시작/종료 값(문자열 또는 분)이 올바른 순서인지 확인 */
 export function assertRange(start: unknown, end: unknown) {
   const ok =

@@ -8,39 +8,8 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { DateField, TimeField } from './DateTimePicker'
 import { EventCalendarPanel } from './EventCalendarPanel'
 import { RepeatIcon } from './Icons'
+import { ALL_DAYS, MAX_REPEAT_SPAN_DAYS, RepeatDaysPicker, RepeatSummary, repeatDates, repeatProblem as rangeProblem } from './RepeatFields'
 import { Field, Modal } from './Modal'
-
-/** 반복 일정 한 번에 만들 수 있는 최대 개수 · 기간 (서버 functions/_lib/series.ts 와 동일) */
-const MAX_COUNT = 366
-const MAX_SPAN_DAYS = 366
-
-/** 요일 칩 순서: 월~일 (값은 0=일 ~ 6=토) */
-const DAY_CHIPS: [number, string][] = [
-  [1, '월'],
-  [2, '화'],
-  [3, '수'],
-  [4, '목'],
-  [5, '금'],
-  [6, '토'],
-  [0, '일'],
-]
-const PRESETS: [string, number[]][] = [
-  ['매일', [0, 1, 2, 3, 4, 5, 6]],
-  ['평일만', [1, 2, 3, 4, 5]],
-  ['주말만', [0, 6]],
-]
-
-/** from~until 에서 선택한 요일에 해당하는 날짜 수 */
-function countDates(from: string, until: string, days: Set<number>) {
-  if (until < from || days.size === 0) return { count: 0, span: 0 }
-  const start = parseDate(from)
-  const end = parseDate(until)
-  const span = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1
-  if (span > MAX_SPAN_DAYS) return { count: 0, span }
-  let count = 0
-  for (let d = start; d <= end; d = addDays(d, 1)) if (days.has(d.getDay())) count++
-  return { count, span }
-}
 
 export function EventModal({ initial, onClose, onSaved }: { initial: Partial<CalendarEvent>; onClose: () => void; onSaved: () => void }) {
   const isNew = !initial.id
@@ -58,7 +27,7 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
   // 반복 (새 일정에서만)
   const [repeat, setRepeat] = useState(false)
   const [until, setUntil] = useState(() => toDateStr(addDays(parseDate(initial.start_at!.slice(0, 10)), 27)))
-  const [days, setDays] = useState<Set<number>>(() => new Set([0, 1, 2, 3, 4, 5, 6]))
+  const [days, setDays] = useState<Set<number>>(ALL_DAYS)
 
   // 일정 길이(분) — 시작을 옮기면 길이를 유지한 채 종료도 함께 이동
   const at = (d: string, t: string) => parseDate(d).getTime() + timeToMin(t) * 60_000
@@ -91,25 +60,12 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
       if (until < startDate) setUntil(toDateStr(addDays(parseDate(startDate), 27)))
     }
   }
-  const toggleDay = (d: number) =>
-    setDays((prev) => {
-      const next = new Set(prev)
-      if (next.has(d)) next.delete(d)
-      else next.add(d)
-      return next
-    })
-  const presetActive = (list: number[]) => list.length === days.size && list.every((d) => days.has(d))
-
-  const { count, span } = useMemo(() => countDates(startDate, until, days), [startDate, until, days])
+  const { dates: repeatList, span } = useMemo(() => repeatDates(startDate, until, days), [startDate, until, days])
+  const count = repeatList.length
 
   // 왼쪽 달력 — 반복이면 실제로 만들어질 날짜들을 표시
   const [pickTarget, setPickTarget] = useState<'start' | 'until'>('start')
-  const marked = useMemo(() => {
-    if (!repeat || span > MAX_SPAN_DAYS || until < startDate) return undefined
-    const set = new Set<string>()
-    for (let d = parseDate(startDate); toDateStr(d) <= until; d = addDays(d, 1)) if (days.has(d.getDay())) set.add(toDateStr(d))
-    return set
-  }, [repeat, span, startDate, until, days])
+  const marked = useMemo(() => (repeat && span <= MAX_REPEAT_SPAN_DAYS ? new Set(repeatList) : undefined), [repeat, span, repeatList])
   const pickFromCalendar = (d: string) => {
     if (repeat && pickTarget === 'until') {
       if (d < startDate) moveStart(d, startTime)
@@ -120,17 +76,8 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
   }
   const repeatProblem = !repeat
     ? null
-    : days.size === 0
-      ? '요일을 하나 이상 골라 주세요.'
-      : span > MAX_SPAN_DAYS
-        ? `반복 기간은 최대 ${MAX_SPAN_DAYS}일까지 설정할 수 있어요.`
-        : count === 0
-          ? '선택한 기간과 요일에 해당하는 날짜가 없어요.'
-          : count > MAX_COUNT
-            ? `한 번에 최대 ${MAX_COUNT}개까지 만들 수 있어요.`
-            : !allDay && endDate !== startDate
-              ? '반복 일정은 하루 안에서 끝나야 해요. 종료 시간을 확인해 주세요.'
-              : null
+    : (rangeProblem(days, span, count) ??
+      (!allDay && endDate !== startDate ? '반복 일정은 하루 안에서 끝나야 해요. 종료 시간을 확인해 주세요.' : null))
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -358,42 +305,7 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
                 </div>
 
                 {/* 요일 */}
-                <div>
-                  <p className="mb-1.5 text-xs font-semibold text-ink-muted">요일</p>
-                  <div className="segmented mb-2" role="tablist" aria-label="요일 빠른 선택">
-                    {PRESETS.map(([label, list]) => (
-                      <button
-                        key={label}
-                        type="button"
-                        role="tab"
-                        aria-selected={presetActive(list)}
-                        onClick={() => setDays(new Set(list))}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-7 gap-1" role="group" aria-label="요일 직접 선택">
-                    {DAY_CHIPS.map(([d, label]) => {
-                      const on = days.has(d)
-                      return (
-                        <button
-                          key={d}
-                          type="button"
-                          aria-pressed={on}
-                          onClick={() => toggleDay(d)}
-                          className={`grid h-9 cursor-pointer place-items-center rounded-full text-sm font-semibold transition active:scale-95 ${
-                            on
-                              ? 'bg-brand text-on-brand'
-                              : `bg-field ring-1 ring-line hover:bg-surface-hover ${d === 0 ? 'text-sunday' : 'text-ink-muted'}`
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
+                <RepeatDaysPicker days={days} onChange={setDays} />
 
                 {/* 시간 */}
                 {!allDay && (
@@ -470,20 +382,7 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
               </div>
             )}
 
-            {repeat && (
-              <p
-                className={`rounded-control px-3 py-2 text-sm font-medium ${
-                  repeatProblem ? 'bg-warning-soft text-warning' : 'bg-brand-soft text-brand-ink'
-                }`}
-                aria-live="polite"
-              >
-                {repeatProblem ?? (
-                  <>
-                    {fmt(parseDate(startDate), 'M월 d일')} ~ {fmt(parseDate(until), 'M월 d일')} 동안 <b>{count}개</b>의 일정이 만들어져요
-                  </>
-                )}
-              </p>
-            )}
+            {repeat && <RepeatSummary from={startDate} until={until} count={count} problem={repeatProblem} noun="일정" />}
           </div>
 
           <Field label="색상">
