@@ -35,6 +35,11 @@ export const GUIDE_STEPS: GuideStep[] = [
     body: '동물 친구와 함께하는 게임형 플래너예요. 주요 기능을 빠르게 둘러볼게요.',
   },
   {
+    target: 'mode',
+    title: '다크 모드',
+    body: '줄을 아래로 당기면 밝은 화면과 어두운 화면이 바뀌어요.',
+  },
+  {
     target: 'quick-add',
     title: '어디서든 바로 추가',
     body: '화면 위의 + 추가 버튼으로 어느 화면에서든 일정이나 할 일을 바로 추가할 수 있어요.',
@@ -63,11 +68,6 @@ export const GUIDE_STEPS: GuideStep[] = [
     target: 'nav',
     title: '메뉴',
     body: '일정 관리, 할 일 목록, 타임 블록, 통계 화면으로 이동할 수 있어요.',
-  },
-  {
-    target: 'mode',
-    title: '다크 모드',
-    body: '줄을 아래로 당기면 밝은 화면과 어두운 화면이 바뀌어요.',
   },
   {
     title: '준비 완료!',
