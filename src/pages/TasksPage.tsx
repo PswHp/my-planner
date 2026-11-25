@@ -4,6 +4,7 @@ import { useDataChanged } from '../lib/quickAdd'
 import { ChoiceDialog } from '../components/ChoiceDialog'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateField } from '../components/DateTimePicker'
+import { EventCalendarPanel } from '../components/EventCalendarPanel'
 import { RepeatIcon, TrashIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
@@ -85,7 +86,7 @@ export default function TasksPage() {
         test: (t: Task) => !t.done && !!t.due_date && t.due_date < today,
       },
       { title: '내일', items: [] as Task[], test: (t: Task) => t.due_date === tomorrow },
-      { title: '예정', items: [] as Task[], test: (t: Task) => !!t.due_date && t.due_date > tomorrow },
+      { title: '남은 일', items: [] as Task[], test: (t: Task) => !!t.due_date && t.due_date > tomorrow },
       { title: '기한 없음', items: [] as Task[], test: (t: Task) => !t.due_date },
     ]
     // 어느 묶음에도 해당하지 않는 할 일(기한이 지난 완료 항목)은 '완료' 탭에서만 보입니다
@@ -385,6 +386,9 @@ function TaskModal({ task, onClose, onSaved }: { task: Task; onClose: () => void
       <Modal
         title="할 일 수정"
         onClose={onClose}
+        aside={
+          <EventCalendarPanel kind="task" focus={due || todayStr()} rangeStart={due} rangeEnd={due} excludeId={task.id} onPick={setDue} />
+        }
         footer={
           <>
             <button type="button" className="btn-danger" onClick={() => setConfirmingDelete(true)}>

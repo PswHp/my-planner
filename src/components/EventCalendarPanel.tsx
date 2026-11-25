@@ -1,16 +1,17 @@
 import { addDays, addMonths, eachDayOfInterval, endOfMonth, endOfWeek, isSameMonth, startOfMonth, startOfWeek } from 'date-fns'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { api, COLOR_HEX, type CalendarEvent } from '../lib/api'
+import { api, COLOR_HEX, type CalendarEvent, type Task } from '../lib/api'
 import { fmt, parseDate, toDateStr, todayStr } from '../lib/date'
 import { ChevronLeft, ChevronRight } from './Icons'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
 /**
- * 일정 추가 · 수정 창 왼쪽의 달력 (PC 전용)
+ * 일정 · 할 일 추가/수정 창 왼쪽의 달력 (PC 전용)
  * - 날짜를 누르면 onPick
  * - 선택 기간(rangeStart~rangeEnd) 칠하기, marked(반복으로 만들어질 날짜) 표시
- * - 기존 일정이 있는 날에 점, 아래에 선택한 날의 기존 일정 목록
+ * - kind='event': 일정이 있는 날에 점 + 그날의 다른 일정 목록
+ *   kind='task' : 마감인 할 일이 있는 날에 점 + 그날 마감인 다른 할 일 목록
  */
 export function EventCalendarPanel({
   focus,
@@ -20,6 +21,7 @@ export function EventCalendarPanel({
   excludeId,
   onPick,
   children,
+  kind = 'event',
 }: {
   /** 달력이 보여줄 기준 날짜 (선택한 날) */
   focus: string
@@ -31,9 +33,11 @@ export function EventCalendarPanel({
   onPick: (date: string) => void
   /** 달력 아래 추가 영역 */
   children?: ReactNode
+  kind?: 'event' | 'task'
 }) {
   const [month, setMonth] = useState(() => startOfMonth(parseDate(focus)))
   const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
   const today = todayStr()
 
   // 다른 곳(날짜 버튼)에서 날짜를 바꾸면 그 달로 이동
@@ -47,6 +51,7 @@ export function EventCalendarPanel({
   const to = toDateStr(days[days.length - 1])
 
   useEffect(() => {
+    if (kind !== 'event') return
     let alive = true
     api
       .get<CalendarEvent[]>(`/events?from=${from}&to=${to}`)
@@ -55,20 +60,40 @@ export function EventCalendarPanel({
     return () => {
       alive = false
     }
-  }, [from, to])
+  }, [from, to, kind])
+
+  // 할 일은 기간 조회가 없어 한 번만 전체를 불러옴
+  useEffect(() => {
+    if (kind !== 'task') return
+    let alive = true
+    api
+      .get<Task[]>('/tasks')
+      .then((t) => alive && setTasks(t))
+      .catch(() => alive && setTasks([]))
+    return () => {
+      alive = false
+    }
+  }, [kind])
 
   const busy = useMemo(() => {
     const set = new Set<string>()
+    if (kind === 'task') {
+      for (const t of tasks) if (t.due_date && t.id !== excludeId) set.add(t.due_date)
+      return set
+    }
     for (const e of events) {
       if (e.id === excludeId) continue
       for (let d = parseDate(e.start_at); toDateStr(d) <= e.end_at.slice(0, 10); d = addDays(d, 1)) set.add(toDateStr(d))
     }
     return set
-  }, [events, excludeId])
+  }, [events, tasks, excludeId, kind])
 
   const dayEvents = events
     .filter((e) => e.id !== excludeId && e.start_at.slice(0, 10) <= focus && e.end_at.slice(0, 10) >= focus)
     .sort((a, b) => b.all_day - a.all_day || a.start_at.localeCompare(b.start_at))
+  const dayTasks = tasks
+    .filter((t) => t.id !== excludeId && t.due_date === focus)
+    .sort((a, b) => a.done - b.done || b.priority - a.priority)
 
   return (
     <div>
@@ -128,7 +153,7 @@ export function EventCalendarPanel({
                 {d.getDate()}
                 {busy.has(ds) && (
                   <span
-                    className={`absolute bottom-0.5 h-1 w-1 rounded-full ${strong ? 'bg-on-brand' : 'bg-point-orange'}`}
+                    className={`absolute bottom-0.5 h-1 w-1 rounded-full ${strong ? 'bg-on-brand' : kind === 'task' ? 'bg-point-blue' : 'bg-point-orange'}`}
                     aria-hidden="true"
                   />
                 )}
@@ -140,24 +165,42 @@ export function EventCalendarPanel({
 
       {children}
 
-      <div className="mt-4 border-t border-line pt-3">
-        <p className="mb-2 text-xs font-semibold text-ink-muted">{fmt(parseDate(focus), 'M월 d일 (EEE)')}의 다른 일정</p>
-        {dayEvents.length === 0 ? (
-          <p className="text-xs text-ink-subtle">일정이 없어요</p>
-        ) : (
-          <ul className="space-y-1.5">
-            {dayEvents.map((e) => (
-              <li key={e.id} className="flex items-center gap-2 text-xs">
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: COLOR_HEX[e.color] }} aria-hidden="true" />
-                <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-ink-muted tabular-nums">
-                  {e.all_day ? '종일' : `${e.start_at.slice(11)}–${e.end_at.slice(11)}`}
-                </span>
-                <span className="truncate font-medium">{e.title}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {kind === 'task' ? (
+        <div className="mt-4 border-t border-line pt-3">
+          <p className="mb-2 text-xs font-semibold text-ink-muted">{fmt(parseDate(focus), 'M월 d일 (EEE)')} 마감인 다른 할 일</p>
+          {dayTasks.length === 0 ? (
+            <p className="text-xs text-ink-subtle">할 일이 없어요</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {dayTasks.map((t) => (
+                <li key={t.id} className="flex items-center gap-2 text-xs">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${t.done ? 'bg-line-strong' : 'bg-point-blue'}`} aria-hidden="true" />
+                  <span className={`truncate font-medium ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <div className="mt-4 border-t border-line pt-3">
+          <p className="mb-2 text-xs font-semibold text-ink-muted">{fmt(parseDate(focus), 'M월 d일 (EEE)')}의 다른 일정</p>
+          {dayEvents.length === 0 ? (
+            <p className="text-xs text-ink-subtle">일정이 없어요</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {dayEvents.map((e) => (
+                <li key={e.id} className="flex items-center gap-2 text-xs">
+                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: COLOR_HEX[e.color] }} aria-hidden="true" />
+                  <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-ink-muted tabular-nums">
+                    {e.all_day ? '종일' : `${e.start_at.slice(11)}–${e.end_at.slice(11)}`}
+                  </span>
+                  <span className="truncate font-medium">{e.title}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   )
 }

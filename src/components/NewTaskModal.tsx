@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { api } from '../lib/api'
 import { parseDate, toDateStr, toDateTimeStr } from '../lib/date'
 import { DateField } from './DateTimePicker'
+import { EventCalendarPanel } from './EventCalendarPanel'
 import { Field, Modal } from './Modal'
 import { ALL_DAYS, RepeatDaysPicker, RepeatSummary, repeatDates, repeatProblem } from './RepeatFields'
 
@@ -29,6 +30,16 @@ export function NewTaskModal({ date, onClose, onSaved }: { date: string; onClose
   const { dates, span } = useMemo(() => repeatDates(from, until, days), [from, until, days])
   const problem = repeat ? repeatProblem(days, span, dates.length) : null
 
+  // 왼쪽 달력: 날짜를 누르면 마감일(반복이면 시작일/종료일) 선택
+  const [pickTarget, setPickTarget] = useState<'start' | 'until'>('start')
+  const marked = useMemo(() => (repeat ? new Set(dates) : undefined), [repeat, dates])
+  const pick = (d: string) => {
+    if (!repeat) return setDue(d)
+    if (pickTarget === 'until' && d >= from) return setUntil(d)
+    setFrom(d)
+    if (until < d) setUntil(d)
+  }
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || saving) return
@@ -50,6 +61,30 @@ export function NewTaskModal({ date, onClose, onSaved }: { date: string; onClose
     <Modal
       title="새 할 일"
       onClose={onClose}
+      aside={
+        <EventCalendarPanel
+          kind="task"
+          focus={repeat ? (pickTarget === 'until' ? until : from) : due || date}
+          rangeStart={repeat ? from : due}
+          rangeEnd={repeat ? until : due}
+          marked={marked}
+          onPick={pick}
+        >
+          {repeat && (
+            <div className="mt-3">
+              <p className="mb-1.5 text-xs font-semibold text-ink-muted">달력에서 고를 날짜</p>
+              <div className="segmented" role="tablist" aria-label="달력에서 고를 날짜">
+                <button type="button" role="tab" aria-selected={pickTarget === 'start'} onClick={() => setPickTarget('start')}>
+                  시작일
+                </button>
+                <button type="button" role="tab" aria-selected={pickTarget === 'until'} onClick={() => setPickTarget('until')}>
+                  종료일
+                </button>
+              </div>
+            </div>
+          )}
+        </EventCalendarPanel>
+      }
       footer={
         <>
           <button type="button" className="btn-ghost ml-auto" onClick={onClose}>
@@ -72,7 +107,15 @@ export function NewTaskModal({ date, onClose, onSaved }: { date: string; onClose
               type="checkbox"
               className="h-[18px] w-[18px] cursor-pointer"
               checked={repeat}
-              onChange={(e) => setRepeat(e.target.checked)}
+              onChange={(e) => {
+                const on = e.target.checked
+                setRepeat(on)
+                // 반복을 켜면 고른 마감일부터 시작
+                if (on && due) {
+                  setFrom(due)
+                  if (until < due) setUntil(toDateStr(addDays(parseDate(due), 27)))
+                }
+              }}
             />
             반복 (기간 일괄 추가)
           </label>
