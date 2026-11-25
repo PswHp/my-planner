@@ -30,8 +30,12 @@ describe('봤는지 기억 (이 브라우저 기준)', () => {
 })
 
 describe('안내 단계', () => {
-  test('처음과 끝은 화면 가운데 안내, 제목은 겹치지 않음', () => {
+  test('처음과 끝은 화면 가운데 안내, 동물 친구는 첫 인사에만, 제목은 겹치지 않음', () => {
     assert.equal(GUIDE_STEPS[0].target, undefined)
+    assert.deepEqual(
+      GUIDE_STEPS.map((s) => !!s.hero),
+      GUIDE_STEPS.map((_, i) => i === 0),
+    )
     assert.equal(GUIDE_STEPS[GUIDE_STEPS.length - 1].target, undefined)
     assert.equal(new Set(GUIDE_STEPS.map((s) => s.title)).size, GUIDE_STEPS.length)
   })
@@ -94,6 +98,12 @@ describe('위치 계산', () => {
   test('화면 가장자리 밖으로 나가지 않음', () => {
     assert.equal(placeCard({ top: 100, left: 0, width: 40, height: 40 }, 200, vw, vh).left, margin)
     assert.equal(placeCard({ top: 100, left: vw - 40, width: 40, height: 40 }, 200, vw, vh).left, vw - cardWidth - margin)
+  })
+
+  test('동물 친구가 나오는 인사 카드는 더 넓게 (가운데)', () => {
+    const { heroWidth } = GUIDE_LAYOUT
+    assert.deepEqual(placeCard(null, 400, vw, vh, heroWidth), { top: 200, left: (vw - heroWidth) / 2, width: heroWidth })
+    assert.equal(placeCard(null, 400, 360, 700, heroWidth).width, 360 - margin * 2)
   })
 
   test('좁은 화면에서는 카드가 화면 너비에 맞춰짐', () => {

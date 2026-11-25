@@ -27,10 +27,13 @@ export interface GuideStep {
   target?: string
   title: string
   body: string
+  /** 화면 가운데에 동물 친구를 크게 보여주는 단계 (첫 인사) */
+  hero?: boolean
 }
 
 export const GUIDE_STEPS: GuideStep[] = [
   {
+    hero: true,
     title: '데일루미에 오신 걸 환영해요!',
     body: '동물 친구와 함께하는 게임형 플래너예요. 주요 기능을 빠르게 둘러볼게요.',
   },
@@ -95,6 +98,8 @@ export const GUIDE_LAYOUT = {
   margin: 16,
   /** 안내 카드 최대 너비 */
   cardWidth: 360,
+  /** 동물 친구가 나오는 인사 카드 최대 너비 */
+  heroWidth: 400,
 }
 
 /** 요소 위치 → 강조 영역 (여백만큼 넓힘) */
@@ -108,9 +113,9 @@ export function spotlightBox(r: Box): Box {
  * - 강조 영역이 없으면 화면 가운데
  * - 있으면 그 아래 → 자리가 없으면 위 → 둘 다 없으면 화면 아래쪽 (가로는 강조 영역 가운데, 화면 밖으로 안 나가게)
  */
-export function placeCard(box: Box | null, cardH: number, vw: number, vh: number) {
-  const { gap, margin, cardWidth } = GUIDE_LAYOUT
-  const width = Math.min(cardWidth, vw - margin * 2)
+export function placeCard(box: Box | null, cardH: number, vw: number, vh: number, maxWidth = GUIDE_LAYOUT.cardWidth) {
+  const { gap, margin } = GUIDE_LAYOUT
+  const width = Math.min(maxWidth, vw - margin * 2)
   if (!box) return { top: Math.max(margin, (vh - cardH) / 2), left: (vw - width) / 2, width }
   const left = Math.min(Math.max(box.left + box.width / 2 - width / 2, margin), vw - width - margin)
   const below = box.top + box.height + gap

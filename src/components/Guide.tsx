@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { GUIDE_STEPS, placeCard, spotlightBox, visibleSteps, type Box } from '../lib/guide'
+import { GUIDE_LAYOUT, GUIDE_STEPS, placeCard, spotlightBox, visibleSteps, type Box } from '../lib/guide'
+import { CAT, CLOUD, FLOWER, FLOWER_PINK, GRASS, HEART, PixelArt, PixelStrip } from './Pixel'
 
 const DIM = 'color-mix(in srgb, var(--color-scrim) 55%, transparent)'
 const BLUR = 'fixed backdrop-blur-[3px]'
@@ -83,7 +84,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
   }, [index])
 
   // 카드 위치: 강조 영역 아래 → 위 → (둘 다 자리가 없으면) 화면 아래쪽
-  const cardPos = placeCard(box, cardH, window.innerWidth, window.innerHeight)
+  const cardPos = placeCard(box, cardH, window.innerWidth, window.innerHeight, step.hero ? GUIDE_LAYOUT.heroWidth : undefined)
 
   return createPortal(
     <div className="fixed inset-0 z-[70]">
@@ -112,13 +113,14 @@ export function Guide({ onClose }: { onClose: () => void }) {
         aria-modal="true"
         aria-labelledby="guide-title"
         aria-describedby="guide-body"
-        className={`fixed animate-pop-in rounded-sheet bg-surface p-5 shadow-pop ${cardH ? '' : 'invisible'}`}
+        className={`fixed animate-pop-in rounded-sheet bg-surface p-5 shadow-pop ${step.hero ? 'text-center' : ''} ${cardH ? '' : 'invisible'}`}
         style={cardPos}
       >
+        {step.hero && <HeroScene />}
         <p className="text-xs font-semibold text-brand-ink">
           {index + 1} / {steps.length}
         </p>
-        <h2 id="guide-title" className="mt-1 text-base font-bold">
+        <h2 id="guide-title" className={`mt-1 font-bold ${step.hero ? 'text-xl' : 'text-base'}`}>
           {step.title}
         </h2>
         <p id="guide-body" className="mt-1.5 text-sm leading-relaxed break-keep text-ink-muted">
@@ -151,5 +153,25 @@ export function Guide({ onClose }: { onClose: () => void }) {
       </div>
     </div>,
     document.body,
+  )
+}
+
+/** 첫 인사 장면 — 대시보드 '나의 동물' 카드와 같은 하늘 · 풀밭 위에 동물 친구를 크게 */
+function HeroScene() {
+  return (
+    <div className="relative mb-4 h-44 overflow-hidden rounded-[14px] bg-gradient-to-b from-sky to-sky-end" aria-hidden="true">
+      <PixelArt sprite={CLOUD} scale={3} className="absolute top-4 left-[12%] opacity-90 dark:!opacity-25" />
+      <PixelArt sprite={CLOUD} scale={2} className="absolute top-8 right-[14%] opacity-80 dark:!opacity-20" />
+      <PixelArt sprite={FLOWER} scale={2} className="absolute bottom-[16px] left-[20%]" />
+      <PixelArt sprite={FLOWER_PINK} scale={2} className="absolute right-[18%] bottom-[16px]" />
+      <PixelStrip sprite={GRASS} scale={3} className="absolute inset-x-0 bottom-0" />
+      <div className="absolute bottom-[12px] left-1/2 -translate-x-1/2">
+        <div className="absolute -top-9 -right-9 animate-bob-slow rounded-[10px] border-2 border-[#4a3b36] bg-white px-1.5 py-1">
+          <PixelArt sprite={HEART} scale={2.5} />
+          <span className="absolute -bottom-[7px] left-3 h-2.5 w-2.5 rotate-45 border-r-2 border-b-2 border-[#4a3b36] bg-white" />
+        </div>
+        <PixelArt sprite={CAT} scale={6} className="animate-bob" />
+      </div>
+    </div>
   )
 }
