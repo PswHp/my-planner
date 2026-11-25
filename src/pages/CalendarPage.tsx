@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, RepeatIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { api, COLOR_HEX, type CalendarEvent, type Task, type TimeBlock, CATEGORY_INFO } from '../lib/api'
 import { fmt, minToTime, parseDate, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
+import { tasksDueOn, undatedOpenTasks } from '../lib/tasks'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -65,16 +66,10 @@ export default function CalendarPage() {
   const today = todayStr()
 
   // 선택한 날짜가 마감인 할 일만 (그 이전에 기한이 지난 할 일은 표시하지 않음)
-  const dayTasks = useMemo(
-    () => tasks.filter((t) => t.due_date === selected).sort((a, b) => a.done - b.done || b.priority - a.priority),
-    [tasks, selected],
-  )
+  const dayTasks = useMemo(() => tasksDueOn(tasks, selected), [tasks, selected])
 
   // 기한 없는 미완료 할 일 — 오늘을 보고 있을 때만 함께 표시
-  const undatedTasks = useMemo(
-    () => (selected === today ? tasks.filter((t) => !t.due_date && !t.done).sort((a, b) => b.priority - a.priority) : []),
-    [tasks, selected, today],
-  )
+  const undatedTasks = useMemo(() => (selected === today ? undatedOpenTasks(tasks) : []), [tasks, selected, today])
 
   const openNew = (date: string) =>
     setEditing({

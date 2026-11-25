@@ -16,6 +16,7 @@ import {
 import { BUSH, CAT, CLOUD, FLOWER, FLOWER_PINK, GRASS, HEART, MOUND, PixelArt, PixelStrip, SPROUT, TREE } from '../components/Pixel'
 import { api, COLOR_HEX, type CalendarEvent, type Task, type User } from '../lib/api'
 import { fmt, parseDate, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
+import { tasksDueOn, undatedOpenTasks } from '../lib/tasks'
 import { PREVIEW_PET } from '../lib/preview'
 import { EventModal } from '../components/EventModal'
 import { useDataChanged, useQuickAddDate } from '../lib/quickAdd'
@@ -68,16 +69,10 @@ export default function DashboardPage({ user }: { user: User }) {
   }
 
   // 선택한 날이 마감인 할 일만 (기한 지난 할 일은 대시보드에 표시하지 않음)
-  const dayTasks = useMemo(
-    () => tasks.filter((t) => t.due_date === selected).sort((a, b) => a.done - b.done || b.priority - a.priority),
-    [tasks, selected],
-  )
+  const dayTasks = useMemo(() => tasksDueOn(tasks, selected), [tasks, selected])
 
   // 기한 없는 미완료 할 일 — 오늘을 보고 있을 때만 함께 표시
-  const undatedTasks = useMemo(
-    () => (selected === today ? tasks.filter((t) => !t.due_date && !t.done).sort((a, b) => b.priority - a.priority) : []),
-    [tasks, selected, today],
-  )
+  const undatedTasks = useMemo(() => (selected === today ? undatedOpenTasks(tasks) : []), [tasks, selected, today])
 
   // 선택한 날의 일정 (여러 날 일정 포함)
   const dayEvents = useMemo(
