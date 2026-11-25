@@ -5,8 +5,8 @@ import { EventModal } from '../components/EventModal'
 import { useDataChanged, useQuickAddDate } from '../lib/quickAdd'
 import { ChevronLeft, ChevronRight, RepeatIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
-import { api, COLOR_HEX, type CalendarEvent, type Task } from '../lib/api'
-import { fmt, parseDate, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
+import { api, COLOR_HEX, type CalendarEvent, type Task, type TimeBlock, CATEGORY_INFO } from '../lib/api'
+import { fmt, minToTime, parseDate, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -17,16 +17,22 @@ export default function CalendarPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [editing, setEditing] = useState<Partial<CalendarEvent> | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [blocks, setBlocks] = useState<TimeBlock[]>([])
 
   const days = useMemo(() => eachDayOfInterval({ start: startOfWeek(month), end: endOfWeek(endOfMonth(month)) }), [month])
   const from = toDateStr(days[0])
   const to = toDateStr(days[days.length - 1])
 
   const load = useCallback(() => {
-    Promise.all([api.get<CalendarEvent[]>(`/events?from=${from}&to=${to}`), api.get<Task[]>('/tasks')])
-      .then(([e, t]) => {
+    Promise.all([
+      api.get<CalendarEvent[]>(`/events?from=${from}&to=${to}`),
+      api.get<Task[]>('/tasks'),
+      api.get<TimeBlock[]>(`/blocks?from=${from}&to=${to}`),
+    ])
+      .then(([e, t, b]) => {
         setEvents(e)
         setTasks(t)
+        setBlocks(b)
         setError(null)
       })
       .catch((e) => setError(e.message))
@@ -207,6 +213,8 @@ export default function CalendarPage() {
             </ul>
           </div>
 
+          <DayBlocks date={selected} blocks={blocks.filter((b) => b.date === selected)} />
+
           <DayTasks date={selected} tasks={dayTasks} undated={undatedTasks} onAdded={load} />
         </div>
       </div>
@@ -221,6 +229,40 @@ export default function CalendarPage() {
           }}
         />
       )}
+    </div>
+  )
+}
+
+/** 선택한 날의 타임 블록 (보기 전용 — 누르면 타임 블록 화면의 그 날짜로 이동) */
+function DayBlocks({ date, blocks }: { date: string; blocks: TimeBlock[] }) {
+  const sorted = [...blocks].sort((a, b) => a.start_min - b.start_min)
+  return (
+    <div className="card p-4">
+      <h2 className="section-title mb-3">
+        타임 블록 <span className="text-sm font-normal text-ink-muted">{sorted.length ? `${sorted.length}개` : ''}</span>
+      </h2>
+      {sorted.length === 0 ? (
+        <p className="rounded-control bg-surface-muted py-4 text-center text-sm text-ink-subtle">이 날 계획한 블록이 없습니다</p>
+      ) : (
+        <ul className="space-y-0.5">
+          {sorted.map((b) => (
+            <li key={b.id} className="flex min-h-9 items-center gap-2.5 rounded-control px-2 py-1.5 text-sm">
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                style={{ background: COLOR_HEX[CATEGORY_INFO[b.category].color] }}
+                aria-hidden="true"
+              />
+              <span className="w-[5.5rem] shrink-0 text-xs whitespace-nowrap text-ink-muted tabular-nums">
+                {minToTime(b.start_min)}–{minToTime(b.end_min)}
+              </span>
+              <span className="min-w-0 flex-1 truncate">{b.title}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Link to={`/blocks?date=${date}`} className="mt-3 block text-right text-xs font-semibold text-brand-ink hover:underline">
+        타임 블록에서 보기 →
+      </Link>
     </div>
   )
 }

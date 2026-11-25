@@ -1,14 +1,16 @@
 import { addDays } from 'date-fns'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent } from 'react'
 import { useDataChanged } from '../lib/quickAdd'
+import { useSearchParams } from 'react-router'
 import { ChoiceDialog } from '../components/ChoiceDialog'
+import { EventModal } from '../components/EventModal'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ALL_DAYS, RepeatDaysPicker, RepeatSummary, repeatDates, repeatProblem } from '../components/RepeatFields'
 import { DateField, TimeField } from '../components/DateTimePicker'
 import { ChevronLeft, ChevronRight, PlusIcon, RepeatIcon, TrashIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
-import { api, CATEGORIES, CATEGORY_INFO, COLOR_HEX, type Category, type Task, type TimeBlock } from '../lib/api'
+import { api, CATEGORIES, CATEGORY_INFO, COLOR_HEX, type CalendarEvent, type Category, type Task, type TimeBlock } from '../lib/api'
 import { fmt, formatDuration, minToTime, parseDate, timeToMin, toDateStr, todayStr } from '../lib/date'
 
 const HOUR_PX = 56
@@ -17,10 +19,17 @@ const PX_PER_MIN = HOUR_PX / 60
 
 type Draft = Partial<TimeBlock> & { date: string; start_min: number; end_min: number }
 
-/** 겹치는 블록을 나란히 배치하기 위한 lane 계산 */
-function layoutBlocks(blocks: TimeBlock[]) {
+/** 시간표에 함께 보여줄 그날의 일정 (분 단위로 변환, 하루 범위로 자름) */
+interface DayEvent {
+  event: CalendarEvent
+  start_min: number
+  end_min: number
+}
+
+/** 겹치는 항목(블록 · 일정)을 나란히 배치하기 위한 lane 계산 */
+function layoutBlocks<T extends { start_min: number; end_min: number }>(blocks: T[]) {
   const sorted = [...blocks].sort((a, b) => a.start_min - b.start_min || b.end_min - a.end_min)
-  const out: { block: TimeBlock; lane: number; lanes: number }[] = []
+  const out: { block: T; lane: number; lanes: number }[] = []
   let cluster: typeof out = []
   let clusterEnd = -1
   let laneEnds: number[] = []
@@ -44,8 +53,15 @@ function layoutBlocks(blocks: TimeBlock[]) {
 }
 
 export default function TimeBlocksPage() {
-  const [date, setDate] = useState(todayStr())
+  // 일정 관리 화면에서 넘어올 때 ?date=YYYY-MM-DD 로 그 날짜를 엶
+  const [searchParams] = useSearchParams()
+  const [date, setDate] = useState(() => {
+    const d = searchParams.get('date')
+    return d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : todayStr()
+  })
   const [blocks, setBlocks] = useState<TimeBlock[]>([])
+  const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [draft, setDraft] = useState<Draft | null>(null)
   const [drag, setDrag] = useState<{ anchor: number; current: number } | null>(null)
@@ -55,10 +71,15 @@ export default function TimeBlocksPage() {
   const gridRef = useRef<HTMLDivElement>(null)
 
   const load = useCallback(() => {
-    Promise.all([api.get<TimeBlock[]>(`/blocks?from=${date}&to=${date}`), api.get<Task[]>('/tasks')])
-      .then(([b, t]) => {
+    Promise.all([
+      api.get<TimeBlock[]>(`/blocks?from=${date}&to=${date}`),
+      api.get<Task[]>('/tasks'),
+      api.get<CalendarEvent[]>(`/events?from=${date}&to=${date}`),
+    ])
+      .then(([b, t, e]) => {
         setBlocks(b)
         setTasks(t)
+        setEvents(e)
         setError(null)
       })
       .catch((e) => setError(e.message))
@@ -104,7 +125,27 @@ export default function TimeBlocksPage() {
     setDraft({ date, start_min: start, end_min: end, title: '', category: 'work', task_id: null })
   }
 
-  const laid = useMemo(() => layoutBlocks(blocks), [blocks])
+  // 그날의 시간 일정 (종일 일정은 위쪽 띠에 따로 표시)
+  const dayEvents = useMemo<DayEvent[]>(
+    () =>
+      events
+        .filter((e) => !e.all_day)
+        .map((e) => {
+          const start_min = e.start_at.slice(0, 10) < date ? 0 : timeToMin(e.start_at.slice(11))
+          const end_min = e.end_at.slice(0, 10) > date ? 1440 : timeToMin(e.end_at.slice(11))
+          return { event: e, start_min, end_min: Math.max(end_min, start_min + SNAP) }
+        }),
+    [events, date],
+  )
+  const allDayEvents = events.filter((e) => e.all_day)
+  const laid = useMemo(
+    () =>
+      layoutBlocks<{ start_min: number; end_min: number; block?: TimeBlock; ev?: DayEvent }>([
+        ...blocks.map((b) => ({ start_min: b.start_min, end_min: b.end_min, block: b })),
+        ...dayEvents.map((d) => ({ start_min: d.start_min, end_min: d.end_min, ev: d })),
+      ]),
+    [blocks, dayEvents],
+  )
   const summary = useMemo(() => {
     const m = new Map<Category, number>()
     for (const b of blocks) m.set(b.category, (m.get(b.category) ?? 0) + b.end_min - b.start_min)
@@ -156,9 +197,32 @@ export default function TimeBlocksPage() {
 
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         <div className="card overflow-hidden">
-          <p className="flex items-center gap-2 border-b border-line bg-surface-muted px-4 py-2.5 text-xs text-ink-muted">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line bg-surface-muted px-4 py-2.5 text-xs text-ink-muted">
             <span aria-hidden="true">💡</span>빈 곳을 드래그해서 블록을 만들고, 블록을 누르면 수정합니다.
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block h-3 w-4 rounded-[3px] border-2 border-dashed border-ink-subtle" aria-hidden="true" />
+              점선은 일정 관리의 일정이에요
+            </span>
           </p>
+          {allDayEvents.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 border-b border-line px-4 py-2">
+              <span className="text-xs font-semibold text-ink-muted">종일 일정</span>
+              {allDayEvents.map((e) => (
+                <button
+                  key={e.id}
+                  type="button"
+                  onClick={() => setEditingEvent(e)}
+                  className="max-w-48 cursor-pointer truncate rounded-full border-2 border-dashed px-2.5 py-0.5 text-xs font-medium transition hover:brightness-95"
+                  style={{
+                    borderColor: COLOR_HEX[e.color],
+                    background: `color-mix(in oklab, ${COLOR_HEX[e.color]} 10%, var(--color-surface))`,
+                  }}
+                >
+                  {e.title}
+                </button>
+              ))}
+            </div>
+          )}
           <div ref={scrollRef} className="h-[65vh] overflow-y-auto">
             <div className="relative flex" style={{ height: 24 * HOUR_PX }}>
               {/* 시간 눈금 */}
@@ -182,7 +246,40 @@ export default function TimeBlocksPage() {
                   backgroundSize: `100% ${HOUR_PX}px, 100% ${HOUR_PX / 2}px`,
                 }}
               >
-                {laid.map(({ block: b, lane, lanes }) => {
+                {laid.map(({ block: item, lane, lanes }) => {
+                  if (item.ev) {
+                    const { event: e, start_min, end_min } = item.ev
+                    const color = COLOR_HEX[e.color]
+                    const h = (end_min - start_min) * PX_PER_MIN
+                    return (
+                      <button
+                        key={'ev-' + e.id}
+                        type="button"
+                        onClick={() => setEditingEvent(e)}
+                        title="일정 — 누르면 일정을 수정해요"
+                        className="absolute cursor-pointer overflow-hidden rounded-lg border-2 border-dashed px-2 py-1 text-left text-xs transition duration-150 hover:brightness-[0.97]"
+                        style={{
+                          top: start_min * PX_PER_MIN + 1,
+                          height: h - 2,
+                          left: `calc(${(lane / lanes) * 100}% + 4px)`,
+                          width: `calc(${100 / lanes}% - 8px)`,
+                          borderColor: color,
+                          background: `color-mix(in oklab, ${color} 8%, var(--color-surface))`,
+                        }}
+                      >
+                        <div className="flex items-center gap-1 truncate font-semibold text-ink">
+                          <span className="shrink-0 rounded bg-surface-sunken px-1 text-[10px] font-bold text-ink-muted">일정</span>
+                          <span className="truncate">{e.title}</span>
+                        </div>
+                        {h > 30 && (
+                          <div className="truncate text-ink-muted">
+                            {minToTime(start_min)}–{minToTime(end_min)}
+                          </div>
+                        )}
+                      </button>
+                    )
+                  }
+                  const b = item.block!
                   const color = COLOR_HEX[CATEGORY_INFO[b.category].color]
                   const height = (b.end_min - b.start_min) * PX_PER_MIN
                   return (
@@ -274,6 +371,17 @@ export default function TimeBlocksPage() {
           </div>
         </div>
       </div>
+
+      {editingEvent && (
+        <EventModal
+          initial={editingEvent}
+          onClose={() => setEditingEvent(null)}
+          onSaved={() => {
+            setEditingEvent(null)
+            load()
+          }}
+        />
+      )}
 
       {draft && (
         <BlockModal
