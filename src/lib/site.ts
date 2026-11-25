@@ -13,5 +13,5 @@ export const SITE = {
   /** 개인정보 관련 문의 이메일 */
   contactEmail: '[문의 이메일]',
   /** 방침 시행일 */
-  effectiveDate: '2026년 11월 23일',
+  effectiveDate: '2026년 11월 25일',
 }
