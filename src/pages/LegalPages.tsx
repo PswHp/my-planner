@@ -21,8 +21,8 @@ export function PrivacyPage() {
   return (
     <LegalLayout title="개인정보처리방침">
       <p>
-        {SITE.operator}(이하 “운영자”)는 {SITE.name}({SITE.nameKo}) 서비스(이하 “서비스”) 이용자의 개인정보를 「개인정보 보호법」 등 관련 법령에 따라
-        보호하며, 다음과 같이 개인정보를 처리합니다.
+        {SITE.operator}(이하 “운영자”)는 {SITE.name}({SITE.nameKo}) 서비스(이하 “서비스”) 이용자의 개인정보를 「개인정보 보호법」 등 관련
+        법령에 따라 보호하며, 다음과 같이 개인정보를 처리합니다.
       </p>
       <section>
         <h2>1. 수집하는 개인정보 항목</h2>
@@ -106,7 +106,8 @@ export function TermsPage() {
       <section>
         <h2>1. 목적</h2>
         <p>
-          이 약관은 {SITE.operator}(이하 “운영자”)가 제공하는 {SITE.name}({SITE.nameKo}) 서비스(이하 “서비스”)의 이용 조건과 절차를 정합니다.
+          이 약관은 {SITE.operator}(이하 “운영자”)가 제공하는 {SITE.name}({SITE.nameKo}) 서비스(이하 “서비스”)의 이용 조건과 절차를
+          정합니다.
         </p>
       </section>
       <section>
@@ -116,7 +117,9 @@ export function TermsPage() {
       <section>
         <h2>3. 회원 가입과 탈퇴</h2>
         <ul>
-          <li>이용자는 Google 계정으로 로그인하여 서비스를 이용할 수 있으며, 로그인 시 이 약관과 개인정보처리방침에 동의한 것으로 봅니다.</li>
+          <li>
+            이용자는 Google 계정으로 로그인하여 서비스를 이용할 수 있으며, 로그인 시 이 약관과 개인정보처리방침에 동의한 것으로 봅니다.
+          </li>
           <li>이용자는 언제든지 [설정] 메뉴에서 탈퇴할 수 있으며, 탈퇴 시 모든 데이터가 즉시 삭제되고 복구할 수 없습니다.</li>
         </ul>
       </section>
@@ -131,7 +134,9 @@ export function TermsPage() {
       <section>
         <h2>5. 서비스의 제공과 변경</h2>
         <ul>
-          <li>서비스는 무료로 “있는 그대로” 제공되며, 운영자는 서비스를 변경하거나 중단할 수 있습니다. 중단 시 가능한 한 사전에 알립니다.</li>
+          <li>
+            서비스는 무료로 “있는 그대로” 제공되며, 운영자는 서비스를 변경하거나 중단할 수 있습니다. 중단 시 가능한 한 사전에 알립니다.
+          </li>
           <li>저장 가능한 데이터의 양에는 합리적인 제한이 있을 수 있습니다.</li>
         </ul>
       </section>

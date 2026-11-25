@@ -36,8 +36,7 @@ export const f = {
   int:
     (min: number, max: number): Field =>
     (v, n) => {
-      if (typeof v !== 'number' || !Number.isInteger(v) || v < min || v > max)
-        return fail(n, `${min}~${max} 사이의 정수여야 합니다.`)
+      if (typeof v !== 'number' || !Number.isInteger(v) || v < min || v > max) return fail(n, `${min}~${max} 사이의 정수여야 합니다.`)
       return v
     },
   bool: (): Field => (v, n) => (typeof v === 'boolean' ? (v ? 1 : 0) : fail(n, 'true/false 여야 합니다.')),
@@ -45,8 +44,7 @@ export const f = {
     (options: readonly string[]): Field =>
     (v, n) =>
       typeof v === 'string' && options.includes(v) ? v : fail(n, `${options.join(', ')} 중 하나여야 합니다.`),
-  nullableId: (): Field => (v, n) =>
-    v === null ? null : typeof v === 'string' && v.length <= 64 ? v : fail(n, '올바른 ID가 아닙니다.'),
+  nullableId: (): Field => (v, n) => (v === null ? null : typeof v === 'string' && v.length <= 64 ? v : fail(n, '올바른 ID가 아닙니다.')),
 }
 
 export interface Resource {
@@ -69,10 +67,7 @@ export function pick(res: Resource, body: Record<string, unknown>, partial: bool
 }
 
 export async function insertRow(db: D1Database, res: Resource, userId: string, values: Record<string, DbValue>) {
-  const count = await db
-    .prepare(`SELECT COUNT(*) AS n FROM ${res.table} WHERE user_id = ?`)
-    .bind(userId)
-    .first<number>('n')
+  const count = await db.prepare(`SELECT COUNT(*) AS n FROM ${res.table} WHERE user_id = ?`).bind(userId).first<number>('n')
   if ((count ?? 0) >= res.maxRows)
     throw new HttpError(429, `저장 가능한 최대 개수(${res.maxRows.toLocaleString()}개)에 도달했습니다. 오래된 항목을 정리해 주세요.`)
   const row: Record<string, DbValue> = { id: crypto.randomUUID(), user_id: userId, ...values }
@@ -90,13 +85,7 @@ export async function getOwned<T = Record<string, unknown>>(db: D1Database, tabl
   return row
 }
 
-export async function updateRow(
-  db: D1Database,
-  res: Resource,
-  userId: string,
-  id: string,
-  values: Record<string, DbValue>,
-) {
+export async function updateRow(db: D1Database, res: Resource, userId: string, id: string, values: Record<string, DbValue>) {
   const cols = Object.keys(values)
   if (cols.length === 0) throw new HttpError(400, '변경할 항목이 없습니다.')
   const result = await db

@@ -16,8 +16,7 @@ export const parseDate = (s: string) => {
 export const fmt = (d: Date, pattern: string) => format(d, pattern, { locale: ko })
 
 /** 분 → 'HH:mm' */
-export const minToTime = (min: number) =>
-  `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
+export const minToTime = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
 
 /** 'HH:mm' → 분 */
 export const timeToMin = (t: string) => {

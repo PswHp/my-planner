@@ -15,9 +15,7 @@ interface GoogleClaims {
 
 function decodeJwtPayload(jwt: string): GoogleClaims {
   const part = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-  const bytes = Uint8Array.from(atob(part.padEnd(part.length + ((4 - (part.length % 4)) % 4), '=')), (c) =>
-    c.charCodeAt(0),
-  )
+  const bytes = Uint8Array.from(atob(part.padEnd(part.length + ((4 - (part.length % 4)) % 4), '=')), (c) => c.charCodeAt(0))
   return JSON.parse(new TextDecoder().decode(bytes))
 }
 

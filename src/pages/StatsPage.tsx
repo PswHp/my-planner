@@ -28,10 +28,7 @@ export default function StatsPage() {
       .catch((e) => setError(e.message))
   }, [from, today])
 
-  const dates = useMemo(
-    () => eachDayOfInterval({ start: parseDate(from), end: parseDate(today) }).map(toDateStr),
-    [from, today],
-  )
+  const dates = useMemo(() => eachDayOfInterval({ start: parseDate(from), end: parseDate(today) }).map(toDateStr), [from, today])
 
   const completedSeries = useMemo(() => {
     const m = new Map(stats?.completedByDay.map((d) => [d.date, d.count]))
@@ -70,7 +67,11 @@ export default function StatsPage() {
               value={rate === null ? '–' : `${rate}%`}
               sub={stats.dueTotal ? `마감 ${stats.dueTotal}개 중 ${stats.dueDone}개 완료` : '기간 내 마감 할 일 없음'}
             />
-            <StatTile label="계획한 시간" value={formatDuration(plannedMinutes)} sub={`하루 평균 ${formatDuration(Math.round(plannedMinutes / days))}`} />
+            <StatTile
+              label="계획한 시간"
+              value={formatDuration(plannedMinutes)}
+              sub={`하루 평균 ${formatDuration(Math.round(plannedMinutes / days))}`}
+            />
             <StatTile
               label="남은 할 일"
               value={`${stats.openTasks}개`}
@@ -107,7 +108,10 @@ export default function StatsPage() {
                           </span>
                         </div>
                         <div className="h-2.5 rounded-full bg-surface-sunken">
-                          <div className="h-full rounded-full" style={{ width: `${(c.minutes / max) * 100}%`, background: COLOR_HEX[info.color] }} />
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${(c.minutes / max) * 100}%`, background: COLOR_HEX[info.color] }}
+                          />
                         </div>
                       </li>
                     )
@@ -174,7 +178,8 @@ function BarChart({ data, format }: { data: { date: string; value: number }[]; f
   const labelEvery = data.length <= 7 ? 1 : data.length <= 31 ? 5 : 15
   const H = 160
 
-  if (max === 0) return <p className="rounded-control bg-surface-muted py-14 text-center text-sm text-ink-subtle">이 기간에 데이터가 없습니다</p>
+  if (max === 0)
+    return <p className="rounded-control bg-surface-muted py-14 text-center text-sm text-ink-subtle">이 기간에 데이터가 없습니다</p>
 
   return (
     <div>
@@ -226,7 +231,11 @@ function BarChart({ data, format }: { data: { date: string; value: number }[]; f
           <div className="mt-1.5 flex text-[11px] text-ink-subtle" style={{ gap: 2 }}>
             {data.map((d, i) => (
               <div key={d.date} className="flex-1 text-center whitespace-nowrap">
-                {(data.length - 1 - i) % labelEvery === 0 ? (data.length <= 7 ? fmt(parseDate(d.date), 'EEE') : fmt(parseDate(d.date), 'M/d')) : ''}
+                {(data.length - 1 - i) % labelEvery === 0
+                  ? data.length <= 7
+                    ? fmt(parseDate(d.date), 'EEE')
+                    : fmt(parseDate(d.date), 'M/d')
+                  : ''}
               </div>
             ))}
           </div>

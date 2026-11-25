@@ -29,7 +29,17 @@ export function ColorPicker({ value, onChange }: { value: Color; onChange: (c: C
           style={{ background: COLOR_HEX[c] }}
         >
           {value === c && (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <path d="m5 12 5 5 9-10" />
             </svg>
           )}
