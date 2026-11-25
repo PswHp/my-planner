@@ -2,12 +2,11 @@ import { addDays } from 'date-fns'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent } from 'react'
 import { useDataChanged } from '../lib/quickAdd'
 import { useSearchParams } from 'react-router'
-import { ChoiceDialog } from '../components/ChoiceDialog'
 import { EventModal } from '../components/EventModal'
-import { ConfirmDialog } from '../components/ConfirmDialog'
+import { DeleteDialog, SeriesEditDialog } from '../components/SeriesDialogs'
 import { ALL_DAYS, RepeatDaysPicker, RepeatSummary, repeatDates, repeatProblem } from '../components/RepeatFields'
 import { DateField, TimeField } from '../components/DateTimePicker'
-import { ChevronLeft, ChevronRight, PlusIcon, RepeatIcon, TrashIcon } from '../components/Icons'
+import { ChevronLeft, ChevronRight, PlusIcon, RepeatIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
 import { api, CATEGORIES, CATEGORY_INFO, COLOR_HEX, type CalendarEvent, type Category, type Task, type TimeBlock } from '../lib/api'
@@ -464,75 +463,37 @@ function BlockModal({ draft, tasks, onClose, onSaved }: { draft: Draft; tasks: T
   return (
     <>
       {askSaveScope && (
-        <ChoiceDialog
-          title="반복 블록을 수정할까요?"
-          icon={<RepeatIcon size={22} />}
-          message={
-            <>
-              <b className="font-semibold text-ink">반복 블록 전체</b>를 고르면 각 블록의 날짜는 그대로 두고
-              <br />
-              제목 · 시간 · 카테고리 · 연결된 할 일만 모두 바꿔요.
-            </>
-          }
-          choices={[
-            {
-              label: '이 블록만 수정',
-              variant: 'secondary',
-              onSelect: async () => {
-                await api.patch(`/blocks/${draft.id}`, { ...fields(), date: draft.date })
-                onSaved()
-              },
-            },
-            {
-              label: '반복 블록 전체 수정',
-              variant: 'primary',
-              onSelect: async () => {
-                await api.patch(`/blocks/series/${seriesId}`, fields())
-                onSaved()
-              },
-            },
-          ]}
+        <SeriesEditDialog
+          noun="블록"
+          keeps="날짜는"
+          changes="제목 · 시간 · 카테고리 · 연결된 할 일"
+          onOne={async () => {
+            await api.patch(`/blocks/${draft.id}`, { ...fields(), date: draft.date })
+            onSaved()
+          }}
+          onAll={async () => {
+            await api.patch(`/blocks/series/${seriesId}`, fields())
+            onSaved()
+          }}
           onCancel={() => setAskSaveScope(false)}
         />
       )}
-      {confirmingDelete &&
-        (seriesId ? (
-          <ChoiceDialog
-            tone="danger"
-            title="반복 블록을 삭제할까요?"
-            icon={<TrashIcon />}
-            message={label}
-            choices={[
-              {
-                label: '이 블록만 삭제',
-                variant: 'secondary',
-                onSelect: async () => {
-                  await api.del(`/blocks/${draft.id}`)
-                  onSaved()
-                },
-              },
-              {
-                label: '반복 블록 전체 삭제',
-                variant: 'danger',
-                onSelect: async () => {
-                  await api.del(`/blocks/series/${seriesId}`)
-                  onSaved()
-                },
-              },
-            ]}
-            onCancel={() => setConfirmingDelete(false)}
-          />
-        ) : (
-          <ConfirmDialog
-            title="이 블록을 삭제할까요?"
-            message={label}
-            onConfirm={async () => {
-              await api.del(`/blocks/${draft.id}`)
-              onSaved()
-            }}
-            onCancel={() => setConfirmingDelete(false)}
-          />
-        ))}
+      {confirmingDelete && (
+        <DeleteDialog
+          noun="블록"
+          series={!!seriesId}
+          message={label}
+          onOne={async () => {
+            await api.del(`/blocks/${draft.id}`)
+            onSaved()
+          }}
+          onAll={async () => {
+            await api.del(`/blocks/series/${seriesId}`)
+            onSaved()
+          }}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
       <Modal
         title={isNew ? '새 타임 블록' : '블록 수정'}
         onClose={onClose}

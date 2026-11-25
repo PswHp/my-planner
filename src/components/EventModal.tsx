@@ -2,14 +2,13 @@ import { addDays } from 'date-fns'
 import { useMemo, useState } from 'react'
 import { api, CATEGORIES, CATEGORY_INFO, COLOR_HEX, type CalendarEvent, type Category, type Color } from '../lib/api'
 import { fmt, formatDuration, parseDate, timeToMin, toDateStr, toDateTimeStr } from '../lib/date'
-import { ChoiceDialog } from './ChoiceDialog'
 import { ColorPicker } from './ColorPicker'
-import { ConfirmDialog } from './ConfirmDialog'
 import { DateField, TimeField } from './DateTimePicker'
 import { EventCalendarPanel } from './EventCalendarPanel'
 import { RepeatIcon } from './Icons'
 import { ALL_DAYS, MAX_REPEAT_SPAN_DAYS, RepeatDaysPicker, RepeatSummary, repeatDates, repeatProblem as rangeProblem } from './RepeatFields'
 import { Field, Modal } from './Modal'
+import { DeleteDialog, SeriesEditDialog } from './SeriesDialogs'
 
 export function EventModal({ initial, onClose, onSaved }: { initial: Partial<CalendarEvent>; onClose: () => void; onSaved: () => void }) {
   const isNew = !initial.id
@@ -137,77 +136,40 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
     <>
       {/* 반복 일정 수정 범위 선택 */}
       {askSaveScope && (
-        <ChoiceDialog
-          title="반복 일정을 수정할까요?"
-          icon={<RepeatIcon size={22} />}
-          message={
-            <>
-              <b className="font-semibold text-ink">반복 일정 전체</b>를 고르면 각 일정의 날짜는 그대로 두고
-              <br />
-              제목 · 시간 · 색 · 메모만 모두 바꿔요.
-            </>
-          }
-          choices={[
-            {
-              label: '이 일정만 수정',
-              variant: 'secondary',
-              onSelect: async () => {
-                await api.patch(`/events/${initial.id}`, singleBody())
-                onSaved()
-              },
-            },
-            {
-              label: '반복 일정 전체 수정',
-              variant: 'primary',
-              onSelect: async () => {
-                await api.patch(`/events/series/${seriesId}`, seriesBody())
-                onSaved()
-              },
-            },
-          ]}
+        <SeriesEditDialog
+          noun="일정"
+          keeps="날짜는"
+          changes="제목 · 시간 · 색 · 메모"
+          onOne={async () => {
+            await api.patch(`/events/${initial.id}`, singleBody())
+            onSaved()
+          }}
+          onAll={async () => {
+            await api.patch(`/events/series/${seriesId}`, seriesBody())
+            onSaved()
+          }}
           onCancel={() => setAskSaveScope(false)}
         />
       )}
 
       {/* 삭제 확인 — 반복 일정이면 범위 선택 */}
-      {confirmingDelete &&
-        (seriesId ? (
-          <ChoiceDialog
-            tone="danger"
-            title="반복 일정을 삭제할까요?"
-            icon={<TrashGlyph />}
-            message={`${title.trim() || '제목 없음'} · ${whenLabel}${initial.block_category ? ' · 연결된 타임 블록도 함께 삭제돼요' : ''}`}
-            choices={[
-              {
-                label: '이 일정만 삭제',
-                variant: 'secondary',
-                onSelect: async () => {
-                  await api.del(`/events/${initial.id}`)
-                  onSaved()
-                },
-              },
-              {
-                label: '반복 일정 전체 삭제',
-                variant: 'danger',
-                onSelect: async () => {
-                  await api.del(`/events/series/${seriesId}`)
-                  onSaved()
-                },
-              },
-            ]}
-            onCancel={() => setConfirmingDelete(false)}
-          />
-        ) : (
-          <ConfirmDialog
-            title="이 일정을 삭제할까요?"
-            message={`${title.trim() || '제목 없음'} · ${whenLabel}${initial.block_category ? ' · 연결된 타임 블록도 함께 삭제돼요' : ''}`}
-            onConfirm={async () => {
-              await api.del(`/events/${initial.id}`)
-              onSaved()
-            }}
-            onCancel={() => setConfirmingDelete(false)}
-          />
-        ))}
+      {confirmingDelete && (
+        <DeleteDialog
+          noun="일정"
+          series={!!seriesId}
+          icon={<TrashGlyph />}
+          message={`${title.trim() || '제목 없음'} · ${whenLabel}${initial.block_category ? ' · 연결된 타임 블록도 함께 삭제돼요' : ''}`}
+          onOne={async () => {
+            await api.del(`/events/${initial.id}`)
+            onSaved()
+          }}
+          onAll={async () => {
+            await api.del(`/events/series/${seriesId}`)
+            onSaved()
+          }}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
 
       <Modal
         title={isNew ? '새 일정' : '일정 수정'}
