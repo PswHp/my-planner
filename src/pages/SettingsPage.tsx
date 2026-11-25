@@ -46,7 +46,9 @@ export default function SettingsPage({ user, onSignedOut }: { user: User; onSign
 
       <section className="card p-5">
         <h2 className="section-title">내 데이터 내보내기</h2>
-        <p className="mt-1 text-sm text-ink-muted">일정, 할 일, 타임 블록 전체를 JSON 파일로 내려받습니다.</p>
+        <p className="mt-1 text-sm text-ink-muted">
+          계정 정보, 일정, 할 일, 타임 블록, 코인 · 액세서리 · 일일 보상 기록까지 내 데이터 전체를 JSON 파일로 내려받습니다.
+        </p>
         <a href="/api/export" download className="btn-secondary mt-4">
           내려받기
         </a>
