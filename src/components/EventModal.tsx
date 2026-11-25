@@ -6,6 +6,7 @@ import { ChoiceDialog } from './ChoiceDialog'
 import { ColorPicker } from './ColorPicker'
 import { ConfirmDialog } from './ConfirmDialog'
 import { DateField, TimeField } from './DateTimePicker'
+import { EventCalendarPanel } from './EventCalendarPanel'
 import { RepeatIcon } from './Icons'
 import { Field, Modal } from './Modal'
 
@@ -100,6 +101,23 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
   const presetActive = (list: number[]) => list.length === days.size && list.every((d) => days.has(d))
 
   const { count, span } = useMemo(() => countDates(startDate, until, days), [startDate, until, days])
+
+  // 왼쪽 달력 — 반복이면 실제로 만들어질 날짜들을 표시
+  const [pickTarget, setPickTarget] = useState<'start' | 'until'>('start')
+  const marked = useMemo(() => {
+    if (!repeat || span > MAX_SPAN_DAYS || until < startDate) return undefined
+    const set = new Set<string>()
+    for (let d = parseDate(startDate); toDateStr(d) <= until; d = addDays(d, 1)) if (days.has(d.getDay())) set.add(toDateStr(d))
+    return set
+  }, [repeat, span, startDate, until, days])
+  const pickFromCalendar = (d: string) => {
+    if (repeat && pickTarget === 'until') {
+      if (d < startDate) moveStart(d, startTime)
+      else setUntil(d)
+      return
+    }
+    moveStart(d, startTime)
+  }
   const repeatProblem = !repeat
     ? null
     : days.size === 0
@@ -241,6 +259,30 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
       <Modal
         title={isNew ? '새 일정' : '일정 수정'}
         onClose={onClose}
+        aside={
+          <EventCalendarPanel
+            focus={repeat && pickTarget === 'until' ? until : startDate}
+            rangeStart={startDate}
+            rangeEnd={repeat ? until : allDay || endDate > startDate ? endDate : startDate}
+            marked={marked}
+            excludeId={initial.id}
+            onPick={pickFromCalendar}
+          >
+            {repeat && (
+              <div className="mt-3">
+                <p className="mb-1.5 text-xs font-semibold text-ink-muted">달력에서 고를 날짜</p>
+                <div className="segmented" role="tablist" aria-label="달력에서 고를 날짜">
+                  <button type="button" role="tab" aria-selected={pickTarget === 'start'} onClick={() => setPickTarget('start')}>
+                    시작일
+                  </button>
+                  <button type="button" role="tab" aria-selected={pickTarget === 'until'} onClick={() => setPickTarget('until')}>
+                    종료일
+                  </button>
+                </div>
+              </div>
+            )}
+          </EventCalendarPanel>
+        }
         footer={
           <>
             {!isNew && (
