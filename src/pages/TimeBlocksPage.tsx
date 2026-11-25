@@ -129,7 +129,7 @@ export default function TimeBlocksPage() {
   const dayEvents = useMemo<DayEvent[]>(
     () =>
       events
-        .filter((e) => !e.all_day)
+        .filter((e) => !e.all_day && !e.block_category) // 연결된 블록이 있는 일정은 블록으로 이미 보임
         .map((e) => {
           const start_min = e.start_at.slice(0, 10) < date ? 0 : timeToMin(e.start_at.slice(11))
           const end_min = e.end_at.slice(0, 10) > date ? 1440 : timeToMin(e.end_at.slice(11))
@@ -459,7 +459,7 @@ function BlockModal({ draft, tasks, onClose, onSaved }: { draft: Draft; tasks: T
     )
   }
 
-  const label = `${title.trim() || '제목 없음'} · ${fmt(parseDate(draft.date), 'M월 d일 (EEE)')} ${start}–${end}`
+  const label = `${title.trim() || '제목 없음'} · ${fmt(parseDate(draft.date), 'M월 d일 (EEE)')} ${start}–${end}${draft.event_id ? ' · 연결된 일정도 함께 삭제돼요' : ''}`
 
   return (
     <>
@@ -622,6 +622,12 @@ function BlockModal({ draft, tasks, onClose, onSaved }: { draft: Draft; tasks: T
 
             {repeat && <RepeatSummary from={from} until={until} count={dates.length} problem={problem} noun="블록" />}
           </div>
+
+          <p className="rounded-control bg-surface-muted px-3 py-2 text-xs text-ink-muted">
+            {draft.event_id || isNew
+              ? '일정 관리에도 같은 시간의 일정으로 함께 표시돼요. 한쪽을 고치거나 지우면 같이 바뀌어요.'
+              : '저장하면 일정 관리에도 같은 시간의 일정이 함께 만들어져요.'}
+          </p>
 
           <Field label="카테고리">
             <div className="flex flex-wrap gap-2">

@@ -80,6 +80,8 @@ export interface CalendarEvent {
   color: Color
   /** 반복 일정 묶음 ID (일괄 추가한 일정만) */
   series_id?: string | null
+  /** 연결된 타임 블록의 카테고리 (연결된 블록이 없으면 null) */
+  block_category?: Category | null
 }
 
 export interface Task {
@@ -118,6 +120,8 @@ export interface TimeBlock {
   task_id: string | null
   /** 반복 블록 묶음 ID (일괄 추가한 블록만) */
   series_id?: string | null
+  /** 연결된 일정 ID */
+  event_id?: string | null
 }
 
 export interface Stats {

@@ -1,6 +1,6 @@
 import { addDays } from 'date-fns'
 import { useMemo, useState } from 'react'
-import { api, type CalendarEvent, type Color } from '../lib/api'
+import { api, CATEGORIES, CATEGORY_INFO, COLOR_HEX, type CalendarEvent, type Category, type Color } from '../lib/api'
 import { fmt, formatDuration, parseDate, timeToMin, toDateStr, toDateTimeStr } from '../lib/date'
 import { ChoiceDialog } from './ChoiceDialog'
 import { ColorPicker } from './ColorPicker'
@@ -22,6 +22,10 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
   const [endDate, setEndDate] = useState(initial.end_at!.slice(0, 10))
   const [endTime, setEndTime] = useState(initial.all_day ? '10:00' : initial.end_at!.slice(11))
   const [color, setColor] = useState<Color>(initial.color ?? 'blue')
+  // 함께 만들어지는 타임 블록의 카테고리 (기존 연결이 있으면 그 카테고리, 없으면 색으로 추정)
+  const [category, setCategory] = useState<Category>(
+    () => initial.block_category ?? CATEGORIES.find((c) => CATEGORY_INFO[c].color === (initial.color ?? 'blue')) ?? 'personal',
+  )
   const [description, setDescription] = useState(initial.description ?? '')
 
   // 반복 (새 일정에서만)
@@ -91,11 +95,13 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
     all_day: allDay,
     color,
     description,
+    category,
   })
   const seriesBody = () => ({
     title,
     description,
     color,
+    category,
     all_day: allDay,
     start_time: allDay ? undefined : startTime,
     end_time: allDay ? undefined : endTime,
@@ -170,7 +176,7 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
             tone="danger"
             title="반복 일정을 삭제할까요?"
             icon={<TrashGlyph />}
-            message={`${title.trim() || '제목 없음'} · ${whenLabel}`}
+            message={`${title.trim() || '제목 없음'} · ${whenLabel}${initial.block_category ? ' · 연결된 타임 블록도 함께 삭제돼요' : ''}`}
             choices={[
               {
                 label: '이 일정만 삭제',
@@ -194,7 +200,7 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
         ) : (
           <ConfirmDialog
             title="이 일정을 삭제할까요?"
-            message={`${title.trim() || '제목 없음'} · ${whenLabel}`}
+            message={`${title.trim() || '제목 없음'} · ${whenLabel}${initial.block_category ? ' · 연결된 타임 블록도 함께 삭제돼요' : ''}`}
             onConfirm={async () => {
               await api.del(`/events/${initial.id}`)
               onSaved()
@@ -384,6 +390,36 @@ export function EventModal({ initial, onClose, onSaved }: { initial: Partial<Cal
 
             {repeat && <RepeatSummary from={startDate} until={until} count={count} problem={repeatProblem} noun="일정" />}
           </div>
+
+          {/* 타임 블록 연동 — 하루 안의 시간 일정만 */}
+          {allDay || (!repeat && endDate !== startDate) ? (
+            <p className="rounded-control bg-surface-muted px-3 py-2 text-xs text-ink-muted">
+              종일 · 여러 날 일정은 타임 블록에 추가되지 않아요.
+            </p>
+          ) : (
+            <div>
+              <p className="mb-1.5 text-xs font-semibold text-ink-muted">타임 블록에도 함께 추가돼요 · 카테고리</p>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="타임 블록 카테고리">
+                {CATEGORIES.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    aria-pressed={category === c}
+                    onClick={() => {
+                      setCategory(c)
+                      setColor(CATEGORY_INFO[c].color) // 카테고리를 고르면 일정 색도 맞춤 (아래에서 바꿀 수 있음)
+                    }}
+                    className={`flex min-h-8 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition ${
+                      category === c ? 'border-inverse bg-inverse text-on-inverse' : 'border-line bg-field hover:bg-surface-hover'
+                    }`}
+                  >
+                    <span className="h-2 w-2 rounded-full" style={{ background: COLOR_HEX[CATEGORY_INFO[c].color] }} aria-hidden="true" />
+                    {CATEGORY_INFO[c].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <Field label="색상">
             <ColorPicker value={color} onChange={setColor} />
