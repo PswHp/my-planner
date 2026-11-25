@@ -346,7 +346,7 @@ function TodayTasks({
   const label = date === today ? '오늘의 할 일' : `${fmt(parseDate(date), 'M월 d일')} 할 일`
 
   return (
-    <section className={`card flex flex-col p-5 ${className}`} data-tour="today-tasks">
+    <section className={`card flex flex-col p-5 ${className}`}>
       <h2 className="card-head">
         <span className="text-point-blue-ink">
           <ClipboardIcon />
@@ -426,7 +426,7 @@ function MiniCalendar({
   onSelect: (d: string) => void
 }) {
   return (
-    <section className={`card p-5 ${className}`} data-tour="calendar">
+    <section className={`card p-5 ${className}`}>
       <h2 className="card-head">
         <CalendarIcon />
         {fmt(month, 'yyyy년 M월')}
@@ -508,7 +508,7 @@ function TodaySchedule({
   const label = date === today ? '오늘의 일정' : `${fmt(parseDate(date), 'M월 d일')} 일정`
 
   return (
-    <section className={`card flex flex-col p-5 ${className}`} data-tour="schedule">
+    <section className={`card flex flex-col p-5 ${className}`}>
       <h2 className="card-head">
         <span className="text-point-orange-ink">
           <CalendarIcon />

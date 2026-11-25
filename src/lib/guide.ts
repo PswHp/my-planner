@@ -48,21 +48,6 @@ export const GUIDE_STEPS: GuideStep[] = [
     body: '화면 위의 + 추가 버튼으로 어느 화면에서든 일정이나 할 일을 바로 추가할 수 있어요.',
   },
   {
-    target: 'today-tasks',
-    title: '오늘의 할 일',
-    body: '오늘이 마감인 할 일과 기한 없는 할 일을 한눈에 볼 수 있어요.',
-  },
-  {
-    target: 'calendar',
-    title: '달력',
-    body: '날짜를 누르면 그날의 할 일과 일정을 볼 수 있어요. 점이 찍힌 날은 일정이나 할 일이 있는 날이에요.',
-  },
-  {
-    target: 'schedule',
-    title: '오늘의 일정',
-    body: '선택한 날의 일정이에요. 누르면 바로 수정할 수 있어요.',
-  },
-  {
     target: 'pet',
     title: '나의 동물',
     body: '함께할 동물 친구예요. 키우기 · 꾸미기 기능은 곧 열려요.',
