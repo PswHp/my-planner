@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { fmt } from '../lib/date'
 import { notifyDataChanged, quickAddDate } from '../lib/quickAdd'
 import { EventModal } from './EventModal'
@@ -6,10 +6,29 @@ import { CalendarIcon, CheckIcon, PlusIcon } from './Icons'
 import { NewTaskModal } from './NewTaskModal'
 
 /**
- * 모든 페이지 위쪽에 고정되는 바 — 왼쪽: 오늘 날짜, 오른쪽: + 추가 (일정 / 할 일)
+ * 날짜 인사말 — 페이지를 열 때마다 하나를 무작위로 고릅니다.
+ * d: '2026년 11월 25일 수요일' (연 · 월 · 일 · 요일이 반드시 포함되도록 날짜를 통째로 넣음)
+ * 문장을 추가 · 수정하려면 이 목록만 고치면 됩니다.
+ */
+const GREETINGS: ((d: ReactNode) => ReactNode)[] = [
+  (d) => <>오늘은 {d}이에요</>,
+  (d) => <>반가워요! 오늘은 {d}입니다</>,
+  (d) => <>{d}, 오늘도 좋은 하루 보내세요</>,
+  (d) => <>{d}, 오늘 하루도 힘내요!</>,
+  (d) => <>어서 오세요, 오늘은 {d}이에요</>,
+  (d) => <>{d}, 차근차근 하나씩 해봐요</>,
+  (d) => <>{d}의 계획을 세워볼까요?</>,
+  (d) => <>오늘은 {d}, 멋진 하루가 될 거예요</>,
+  (d) => <>{d}, 오늘도 한 걸음씩 나아가요</>,
+  (d) => <>다시 만나서 반가워요. 오늘은 {d}입니다</>,
+]
+
+/**
+ * 모든 페이지 위쪽에 고정되는 바 — 왼쪽: 날짜 인사말, 오른쪽: + 추가 (일정 / 할 일)
  */
 export function TopBar() {
   const [now, setNow] = useState(() => new Date())
+  const [greeting] = useState(() => GREETINGS[Math.floor(Math.random() * GREETINGS.length)])
   const [menuOpen, setMenuOpen] = useState(false)
   const [adding, setAdding] = useState<{ kind: 'event' | 'task'; date: string } | null>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -53,16 +72,17 @@ export function TopBar() {
   return (
     <>
       <div className="sticky top-0 z-30 -mx-4 mb-4 border-b border-line/70 bg-bg/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur sm:-mx-6 sm:px-6 md:-mx-8 md:mb-6 md:px-8">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-3">
-          <p className="flex min-w-0 items-center gap-2 text-[15px] font-semibold">
-            <span className="text-brand">
+        <div className="mx-auto flex min-h-14 w-full max-w-6xl items-center justify-between gap-3 py-2">
+          <p className="flex min-w-0 items-center gap-2 text-sm leading-snug text-ink-muted sm:text-[15px]">
+            <span className="shrink-0 text-brand">
               <CalendarIcon />
             </span>
-            <time dateTime={fmt(now, 'yyyy-MM-dd')} className="truncate">
-              {fmt(now, 'M월 d일 EEEE')}
-            </time>
-            <span className="hidden rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] font-semibold text-ink-muted sm:inline">
-              오늘
+            <span className="min-w-0 line-clamp-2">
+              {greeting(
+                <time dateTime={fmt(now, 'yyyy-MM-dd')} className="font-bold whitespace-nowrap text-ink">
+                  {fmt(now, 'yyyy년 M월 d일 EEEE')}
+                </time>,
+              )}
             </span>
           </p>
 
