@@ -131,6 +131,12 @@ export const InfoIcon = () => (
     <path d="M12 11v5M12 8h.01" />
   </svg>
 )
+export const HelpIcon = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.3M12 17h.01" />
+  </svg>
+)
 export const ClipboardIcon = () => (
   <svg {...base}>
     <rect x="5" y="4" width="14" height="17" rx="2" />

@@ -9,6 +9,7 @@ import {
   ChevronRight,
   ClipboardIcon,
   HeartIcon,
+  HelpIcon,
   InfoIcon,
   PencilIcon,
   ShirtIcon,
@@ -139,9 +140,9 @@ export default function DashboardPage({ user, guideReady }: { user: User; guideR
     <div>
       <Greeting user={user} selected={selected} today={today} onSelect={select} />
 
-      {/* TODO(임시): 사용법 안내 테스트 버튼 — 확인이 끝나면 이 버튼만 지우면 됩니다 */}
+      {/* 사용법 안내 다시 보기 (처음 방문 때는 자동으로 뜸) */}
       <button type="button" className="btn-secondary mb-4" onClick={() => setGuideOpen(true)}>
-        사용법 안내 테스트
+        <HelpIcon /> 사용법 안내
       </button>
 
       {error && <p className="alert-error mb-4">{error}</p>}
