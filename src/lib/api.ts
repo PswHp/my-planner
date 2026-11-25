@@ -91,6 +91,8 @@ export interface Task {
   done: 0 | 1
   completed_at: string | null
   created_at: string
+  /** 반복 할 일 묶음 ID (일괄 추가한 할 일만) */
+  series_id?: string | null
 }
 
 export const CATEGORIES = ['work', 'study', 'health', 'personal', 'meeting', 'rest'] as const

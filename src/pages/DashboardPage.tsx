@@ -73,6 +73,12 @@ export default function DashboardPage({ user }: { user: User }) {
     [tasks, selected],
   )
 
+  // 기한 없는 미완료 할 일 — 오늘을 보고 있을 때만 함께 표시
+  const undatedTasks = useMemo(
+    () => (selected === today ? tasks.filter((t) => !t.due_date && !t.done).sort((a, b) => b.priority - a.priority) : []),
+    [tasks, selected, today],
+  )
+
   // 선택한 날의 일정 (여러 날 일정 포함)
   const dayEvents = useMemo(
     () =>
@@ -120,7 +126,6 @@ export default function DashboardPage({ user }: { user: User }) {
     return { count, doneToday }
   }, [tasks])
 
-
   return (
     <div>
       <Greeting user={user} selected={selected} today={today} onSelect={select} />
@@ -130,12 +135,7 @@ export default function DashboardPage({ user }: { user: User }) {
       <div className="grid gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-12">
         <PetCard className="md:col-span-2 xl:col-span-7" />
 
-        <TodayTasks
-          className="xl:col-span-5"
-          date={selected}
-          today={today}
-          tasks={dayTasks}
-        />
+        <TodayTasks className="xl:col-span-5" date={selected} today={today} tasks={dayTasks} undated={undatedTasks} />
 
         <MiniCalendar
           className="max-md:order-last xl:col-span-4"
@@ -148,13 +148,7 @@ export default function DashboardPage({ user }: { user: User }) {
           onSelect={select}
         />
 
-        <TodaySchedule
-          className="xl:col-span-4"
-          date={selected}
-          today={today}
-          events={dayEvents}
-          onOpen={setEditing}
-        />
+        <TodaySchedule className="xl:col-span-4" date={selected} today={today} events={dayEvents} onOpen={setEditing} />
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-1 md:gap-5 xl:col-span-4">
           <WeekProgress {...week} />
@@ -323,11 +317,14 @@ function TodayTasks({
   date,
   today,
   tasks,
+  undated,
 }: {
   className?: string
   date: string
   today: string
   tasks: Task[]
+  /** 기한 없는 미완료 할 일 (오늘일 때만) */
+  undated: Task[]
 }) {
   const done = tasks.filter((t) => t.done).length
   const label = date === today ? '오늘의 할 일' : `${fmt(parseDate(date), 'M월 d일')} 할 일`
@@ -344,26 +341,43 @@ function TodayTasks({
         </span>
       </h2>
 
-      {tasks.length === 0 ? (
+      {tasks.length === 0 && undated.length === 0 ? (
         <Empty sprite={<PixelArt sprite={SPROUT} scale={3} />} text="할 일이 없어요. 여유로운 하루를 보내세요!" />
       ) : (
-        <ul className="-mx-1.5 max-h-72 space-y-1 overflow-y-auto px-1.5">
-          {tasks.map((t) => (
-            <li
-              key={t.id}
-              className={`flex min-h-11 items-center gap-3 rounded-[10px] border px-3 py-2 text-sm ${
-                t.done ? 'border-transparent' : 'border-line bg-field'
-              }`}
-            >
-              <span
-                className={`h-2 w-2 shrink-0 rounded-full ${t.done ? 'bg-line-strong' : 'bg-point-blue'}`}
-                aria-hidden="true"
-              />
-              <span className={`min-w-0 flex-1 truncate ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
-              {t.done ? <span className="sr-only">(완료)</span> : null}
-            </li>
-          ))}
-        </ul>
+        <div className="-mx-1.5 max-h-72 space-y-3 overflow-y-auto px-1.5">
+          {tasks.length > 0 && (
+            <ul className="space-y-1">
+              {tasks.map((t) => (
+                <li
+                  key={t.id}
+                  className={`flex min-h-11 items-center gap-3 rounded-[10px] border px-3 py-2 text-sm ${
+                    t.done ? 'border-transparent' : 'border-line bg-field'
+                  }`}
+                >
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${t.done ? 'bg-line-strong' : 'bg-point-blue'}`} aria-hidden="true" />
+                  <span className={`min-w-0 flex-1 truncate ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
+                  {t.done ? <span className="sr-only">(완료)</span> : null}
+                </li>
+              ))}
+            </ul>
+          )}
+          {undated.length > 0 && (
+            <div>
+              <p className="mb-1.5 text-xs font-semibold text-ink-subtle">기한 없음</p>
+              <ul className="space-y-1">
+                {undated.map((t) => (
+                  <li
+                    key={t.id}
+                    className="flex min-h-10 items-center gap-3 rounded-[10px] border border-dashed border-line-strong px-3 py-2 text-sm"
+                  >
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-point-purple" aria-hidden="true" />
+                    <span className="min-w-0 flex-1 truncate">{t.title}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       )}
 
       <Link to="/tasks" className="mt-auto self-end pt-3 text-xs font-semibold text-brand-ink hover:underline">
@@ -445,7 +459,10 @@ function MiniCalendar({
             >
               {d.getDate()}
               {busyDays.has(ds) && (
-                <span className={`absolute bottom-1 h-1 w-1 rounded-full ${isSel ? 'bg-on-brand' : 'bg-brand-accent'}`} aria-hidden="true" />
+                <span
+                  className={`absolute bottom-1 h-1 w-1 rounded-full ${isSel ? 'bg-on-brand' : 'bg-brand-accent'}`}
+                  aria-hidden="true"
+                />
               )}
             </button>
           )

@@ -54,6 +54,13 @@ export const blockSeriesResource: Resource = {
   required: ['start_min', 'end_min', 'title'],
 }
 
+/** 반복 할 일의 공통 내용 (마감일 · 완료 상태 제외) — POST/PATCH /api/tasks/series */
+export const taskSeriesResource: Resource = {
+  ...taskResource,
+  fields: { title: taskResource.fields.title, notes: taskResource.fields.notes, priority: taskResource.fields.priority },
+  required: ['title'],
+}
+
 /** 시작/종료 값(문자열 또는 분)이 올바른 순서인지 확인 */
 export function assertRange(start: unknown, end: unknown) {
   const ok =

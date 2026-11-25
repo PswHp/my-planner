@@ -1,9 +1,10 @@
 import { addDays } from 'date-fns'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useDataChanged } from '../lib/quickAdd'
+import { ChoiceDialog } from '../components/ChoiceDialog'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DateField } from '../components/DateTimePicker'
-import { TrashIcon } from '../components/Icons'
+import { RepeatIcon, TrashIcon } from '../components/Icons'
 import { PageHeader } from '../components/Layout'
 import { Field, Modal } from '../components/Modal'
 import { api, type Task } from '../lib/api'
@@ -158,6 +159,12 @@ export default function TasksPage() {
                               {fmt(parseDate(t.due_date), 'M월 d일 (EEE)')}
                             </span>
                           )}
+                          {t.series_id && (
+                            <span className="inline-flex items-center gap-0.5 text-brand-ink">
+                              <RepeatIcon size={12} />
+                              반복
+                            </span>
+                          )}
                           {t.notes && <span className="truncate">{t.notes}</span>}
                         </span>
                       )}
@@ -178,18 +185,47 @@ export default function TasksPage() {
         ))}
       </div>
 
-      {deleting && (
-        <ConfirmDialog
-          title="이 할 일을 삭제할까요?"
-          message={`${deleting.title}${deleting.due_date ? ` · ${fmt(parseDate(deleting.due_date), 'M월 d일')} 마감` : ''}`}
-          onConfirm={async () => {
-            await api.del(`/tasks/${deleting.id}`)
-            setDeleting(null)
-            load()
-          }}
-          onCancel={() => setDeleting(null)}
-        />
-      )}
+      {deleting &&
+        (deleting.series_id ? (
+          <ChoiceDialog
+            tone="danger"
+            title="반복 할 일을 삭제할까요?"
+            icon={<TrashIcon />}
+            message={`${deleting.title}${deleting.due_date ? ` · ${fmt(parseDate(deleting.due_date), 'M월 d일')} 마감` : ''}`}
+            choices={[
+              {
+                label: '이 할 일만 삭제',
+                variant: 'secondary',
+                onSelect: async () => {
+                  await api.del(`/tasks/${deleting.id}`)
+                  setDeleting(null)
+                  load()
+                },
+              },
+              {
+                label: '반복 할 일 전체 삭제',
+                variant: 'danger',
+                onSelect: async () => {
+                  await api.del(`/tasks/series/${deleting.series_id}`)
+                  setDeleting(null)
+                  load()
+                },
+              },
+            ]}
+            onCancel={() => setDeleting(null)}
+          />
+        ) : (
+          <ConfirmDialog
+            title="이 할 일을 삭제할까요?"
+            message={`${deleting.title}${deleting.due_date ? ` · ${fmt(parseDate(deleting.due_date), 'M월 d일')} 마감` : ''}`}
+            onConfirm={async () => {
+              await api.del(`/tasks/${deleting.id}`)
+              setDeleting(null)
+              load()
+            }}
+            onCancel={() => setDeleting(null)}
+          />
+        ))}
 
       {editing && (
         <TaskModal
@@ -263,10 +299,14 @@ function TaskModal({ task, onClose, onSaved }: { task: Task; onClose: () => void
   const [priority, setPriority] = useState<number>(task.priority)
   const [error, setError] = useState<string | null>(null)
 
+  const [askSaveScope, setAskSaveScope] = useState(false)
+  const single = () => api.patch(`/tasks/${task.id}`, { title, notes, due_date: due || null, priority })
+
   const save = async (e: FormEvent) => {
     e.preventDefault()
+    if (task.series_id) return setAskSaveScope(true) // 이 할 일만 / 반복 전체
     try {
-      await api.patch(`/tasks/${task.id}`, { title, notes, due_date: due || null, priority })
+      await single()
       onSaved()
     } catch (err) {
       setError((err as Error).message)
@@ -282,14 +322,66 @@ function TaskModal({ task, onClose, onSaved }: { task: Task; onClose: () => void
 
   return (
     <>
-      {confirmingDelete && (
-        <ConfirmDialog
-          title="이 할 일을 삭제할까요?"
-          message={title.trim() || task.title}
-          onConfirm={remove}
-          onCancel={() => setConfirmingDelete(false)}
+      {askSaveScope && (
+        <ChoiceDialog
+          title="반복 할 일을 수정할까요?"
+          icon={<RepeatIcon size={22} />}
+          message={
+            <>
+              <b className="font-semibold text-ink">반복 할 일 전체</b>를 고르면 각 할 일의 마감일과 완료 여부는 그대로 두고
+              <br />
+              제목 · 메모 · 우선순위만 모두 바꿔요.
+            </>
+          }
+          choices={[
+            {
+              label: '이 할 일만 수정',
+              variant: 'secondary',
+              onSelect: async () => {
+                await single()
+                onSaved()
+              },
+            },
+            {
+              label: '반복 할 일 전체 수정',
+              variant: 'primary',
+              onSelect: async () => {
+                await api.patch(`/tasks/series/${task.series_id}`, { title, notes, priority })
+                onSaved()
+              },
+            },
+          ]}
+          onCancel={() => setAskSaveScope(false)}
         />
       )}
+      {confirmingDelete &&
+        (task.series_id ? (
+          <ChoiceDialog
+            tone="danger"
+            title="반복 할 일을 삭제할까요?"
+            icon={<TrashIcon />}
+            message={title.trim() || task.title}
+            choices={[
+              { label: '이 할 일만 삭제', variant: 'secondary', onSelect: remove },
+              {
+                label: '반복 할 일 전체 삭제',
+                variant: 'danger',
+                onSelect: async () => {
+                  await api.del(`/tasks/series/${task.series_id}`)
+                  onSaved()
+                },
+              },
+            ]}
+            onCancel={() => setConfirmingDelete(false)}
+          />
+        ) : (
+          <ConfirmDialog
+            title="이 할 일을 삭제할까요?"
+            message={title.trim() || task.title}
+            onConfirm={remove}
+            onCancel={() => setConfirmingDelete(false)}
+          />
+        ))}
       <Modal
         title="할 일 수정"
         onClose={onClose}
@@ -311,6 +403,11 @@ function TaskModal({ task, onClose, onSaved }: { task: Task; onClose: () => void
           <Field label="제목">
             <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
           </Field>
+          {task.series_id && (
+            <p className="flex items-center gap-1.5 rounded-control bg-brand-soft px-3 py-2 text-xs font-medium text-brand-ink">
+              <RepeatIcon size={16} /> 반복 할 일에 속한 할 일이에요
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <Field label="마감일">
               <DateField label="마감일" value={due} onChange={setDue} clearable emptyLabel="기한 없음" />

@@ -1,13 +1,4 @@
-import {
-  addDays,
-  addMonths,
-  eachDayOfInterval,
-  endOfMonth,
-  endOfWeek,
-  isSameMonth,
-  startOfMonth,
-  startOfWeek,
-} from 'date-fns'
+import { addDays, addMonths, eachDayOfInterval, endOfMonth, endOfWeek, isSameMonth, startOfMonth, startOfWeek } from 'date-fns'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { EventModal } from '../components/EventModal'
@@ -27,10 +18,7 @@ export default function CalendarPage() {
   const [editing, setEditing] = useState<Partial<CalendarEvent> | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const days = useMemo(
-    () => eachDayOfInterval({ start: startOfWeek(month), end: endOfWeek(endOfMonth(month)) }),
-    [month],
-  )
+  const days = useMemo(() => eachDayOfInterval({ start: startOfWeek(month), end: endOfWeek(endOfMonth(month)) }), [month])
   const from = toDateStr(days[0])
   const to = toDateStr(days[days.length - 1])
 
@@ -76,6 +64,12 @@ export default function CalendarPage() {
     [tasks, selected],
   )
 
+  // 기한 없는 미완료 할 일 — 오늘을 보고 있을 때만 함께 표시
+  const undatedTasks = useMemo(
+    () => (selected === today ? tasks.filter((t) => !t.due_date && !t.done).sort((a, b) => b.priority - a.priority) : []),
+    [tasks, selected, today],
+  )
+
   const openNew = (date: string) =>
     setEditing({
       title: '',
@@ -90,11 +84,7 @@ export default function CalendarPage() {
     <div>
       <PageHeader title={fmt(month, 'yyyy년 M월')}>
         <div className="flex items-center rounded-control border border-line bg-surface p-0.5 shadow-card">
-          <button
-            className="btn-ghost btn-icon min-h-9"
-            onClick={() => setMonth(addMonths(month, -1))}
-            aria-label="이전 달"
-          >
+          <button className="btn-ghost btn-icon min-h-9" onClick={() => setMonth(addMonths(month, -1))} aria-label="이전 달">
             <ChevronLeft />
           </button>
           <button
@@ -106,11 +96,7 @@ export default function CalendarPage() {
           >
             오늘
           </button>
-          <button
-            className="btn-ghost btn-icon min-h-9"
-            onClick={() => setMonth(addMonths(month, 1))}
-            aria-label="다음 달"
-          >
+          <button className="btn-ghost btn-icon min-h-9" onClick={() => setMonth(addMonths(month, 1))} aria-label="다음 달">
             <ChevronRight />
           </button>
         </div>
@@ -193,9 +179,7 @@ export default function CalendarPage() {
               {fmt(parseDate(selected), 'M월 d일 (EEE)')} <span className="text-sm font-normal text-ink-muted">일정</span>
             </h2>
             {selectedItems.events.length === 0 && (
-              <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">
-                일정이 없습니다
-              </p>
+              <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">일정이 없습니다</p>
             )}
             <ul className="space-y-1">
               {selectedItems.events.map((ev) => (
@@ -223,7 +207,7 @@ export default function CalendarPage() {
             </ul>
           </div>
 
-          <DayTasks date={selected} tasks={dayTasks} onAdded={load} />
+          <DayTasks date={selected} tasks={dayTasks} undated={undatedTasks} onAdded={load} />
         </div>
       </div>
 
@@ -244,10 +228,13 @@ export default function CalendarPage() {
 function DayTasks({
   date,
   tasks,
+  undated,
   onAdded,
 }: {
   date: string
   tasks: Task[]
+  /** 기한 없는 미완료 할 일 (오늘일 때만) */
+  undated: Task[]
   onAdded: () => void
 }) {
   const [title, setTitle] = useState('')
@@ -270,14 +257,11 @@ function DayTasks({
   return (
     <div className="card p-4">
       <h2 className="section-title mb-3">
-        할 일{' '}
-        <span className="text-sm font-normal text-ink-muted">{tasks.length ? `${openCount}/${tasks.length}` : ''}</span>
+        할 일 <span className="text-sm font-normal text-ink-muted">{tasks.length ? `${openCount}/${tasks.length}` : ''}</span>
       </h2>
 
-      {tasks.length === 0 && (
-        <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">
-          이 날 마감인 할 일이 없습니다
-        </p>
+      {tasks.length === 0 && undated.length === 0 && (
+        <p className="rounded-control bg-surface-muted py-5 text-center text-sm text-ink-subtle">이 날 마감인 할 일이 없습니다</p>
       )}
       <ul className="space-y-0.5">
         {tasks.map((t) => {
@@ -289,9 +273,7 @@ function DayTasks({
                   aria-hidden="true"
                 />
                 <span className="min-w-0 flex-1">
-                  <span className={`block truncate text-sm ${t.done ? 'text-ink-subtle line-through' : ''}`}>
-                    {t.title}
-                  </span>
+                  <span className={`block truncate text-sm ${t.done ? 'text-ink-subtle line-through' : ''}`}>{t.title}</span>
                 </span>
                 {t.priority === 3 && !t.done && (
                   <span className="rounded bg-danger-soft px-1.5 py-px text-[11px] font-medium text-danger">높음</span>
@@ -302,6 +284,19 @@ function DayTasks({
           )
         })}
       </ul>
+      {undated.length > 0 && (
+        <div className="mt-2">
+          <p className="mb-1 px-2 text-xs font-semibold text-ink-subtle">기한 없음</p>
+          <ul className="space-y-0.5">
+            {undated.map((t) => (
+              <li key={t.id} className="flex min-h-10 items-start gap-2.5 rounded-control px-2 py-2">
+                <span className="mt-[7px] h-2 w-2 shrink-0 rounded-full bg-point-purple" aria-hidden="true" />
+                <span className="block min-w-0 flex-1 truncate text-sm">{t.title}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <form onSubmit={add} className="mt-3 flex gap-2 border-t border-line pt-3">
         <input
