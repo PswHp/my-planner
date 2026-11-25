@@ -86,7 +86,7 @@ export function TopBar() {
             </span>
           </p>
 
-          <div ref={wrapRef} className="relative">
+          <div ref={wrapRef} className="relative" data-tour="quick-add">
             <button
               type="button"
               className="btn-primary min-h-10 rounded-full pr-4 pl-3"

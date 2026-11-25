@@ -70,7 +70,7 @@ export default function App() {
     <>
       <Routes>
         <Route element={<Layout user={user} onLogout={signedOut} />}>
-          <Route path="/dashboard" element={<DashboardPage user={user} />} />
+          <Route path="/dashboard" element={<DashboardPage user={user} guideReady={!showReward} />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/blocks" element={<TimeBlocksPage />} />

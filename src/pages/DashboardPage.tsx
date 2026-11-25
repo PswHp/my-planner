@@ -19,6 +19,8 @@ import { fmt, parseDate, toDateStr, toDateTimeStr, todayStr } from '../lib/date'
 import { tasksDueOn, undatedOpenTasks } from '../lib/tasks'
 import { PREVIEW_PET } from '../lib/preview'
 import { EventModal } from '../components/EventModal'
+import { Guide } from '../components/Guide'
+import { guideSeen, markGuideSeen } from '../lib/guide'
 import { useDataChanged, useQuickAddDate } from '../lib/quickAdd'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -27,7 +29,8 @@ const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
  * 대시보드 — 기존 API(/events, /tasks)만 사용합니다.
  * '나의 동물' 카드만 디자인용 임시 데이터(PREVIEW_PET)이며, 나머지는 모두 실제 데이터입니다.
  */
-export default function DashboardPage({ user }: { user: User }) {
+/** guideReady: 다른 창(일일 보상)이 닫혀서 처음 온 사람에게 사용법 안내를 띄워도 되는지 */
+export default function DashboardPage({ user, guideReady }: { user: User; guideReady: boolean }) {
   const today = todayStr()
   const [selected, setSelected] = useState(today)
   const [month, setMonth] = useState(() => startOfMonth(new Date()))
@@ -35,6 +38,17 @@ export default function DashboardPage({ user }: { user: User }) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Partial<CalendarEvent> | null>(null)
+  const [guideOpen, setGuideOpen] = useState(false)
+
+  // 이 브라우저에서 처음이면 사용법 안내 (일일 보상 창이 닫힌 뒤)
+  useEffect(() => {
+    if (guideReady && !guideSeen()) setGuideOpen(true)
+  }, [guideReady])
+
+  const closeGuide = () => {
+    markGuideSeen()
+    setGuideOpen(false)
+  }
 
   const days = useMemo(
     () =>
@@ -125,6 +139,11 @@ export default function DashboardPage({ user }: { user: User }) {
     <div>
       <Greeting user={user} selected={selected} today={today} onSelect={select} />
 
+      {/* TODO(임시): 사용법 안내 테스트 버튼 — 확인이 끝나면 이 버튼만 지우면 됩니다 */}
+      <button type="button" className="btn-secondary mb-4" onClick={() => setGuideOpen(true)}>
+        사용법 안내 테스트
+      </button>
+
       {error && <p className="alert-error mb-4">{error}</p>}
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-12">
@@ -161,6 +180,8 @@ export default function DashboardPage({ user }: { user: User }) {
           }}
         />
       )}
+
+      {guideOpen && <Guide onClose={closeGuide} />}
     </div>
   )
 }
@@ -232,7 +253,7 @@ function PetCard({ className = '' }: { className?: string }) {
   ]
 
   return (
-    <section className={`card flex gap-3 p-3 sm:gap-4 ${className}`} aria-label="나의 동물 (미리보기)">
+    <section className={`card flex gap-3 p-3 sm:gap-4 ${className}`} aria-label="나의 동물 (미리보기)" data-tour="pet">
       {/* 장면 */}
       <div className="relative min-h-[210px] w-[42%] shrink-0 overflow-hidden rounded-[14px] bg-gradient-to-b from-sky to-sky-end sm:min-h-[236px] sm:w-[46%]">
         <PixelArt sprite={CLOUD} scale={3} className="dark:!opacity-25 absolute top-4 left-[18%] opacity-90" />
@@ -325,7 +346,7 @@ function TodayTasks({
   const label = date === today ? '오늘의 할 일' : `${fmt(parseDate(date), 'M월 d일')} 할 일`
 
   return (
-    <section className={`card flex flex-col p-5 ${className}`}>
+    <section className={`card flex flex-col p-5 ${className}`} data-tour="today-tasks">
       <h2 className="card-head">
         <span className="text-point-blue-ink">
           <ClipboardIcon />
@@ -405,7 +426,7 @@ function MiniCalendar({
   onSelect: (d: string) => void
 }) {
   return (
-    <section className={`card p-5 ${className}`}>
+    <section className={`card p-5 ${className}`} data-tour="calendar">
       <h2 className="card-head">
         <CalendarIcon />
         {fmt(month, 'yyyy년 M월')}
@@ -487,7 +508,7 @@ function TodaySchedule({
   const label = date === today ? '오늘의 일정' : `${fmt(parseDate(date), 'M월 d일')} 일정`
 
   return (
-    <section className={`card flex flex-col p-5 ${className}`}>
+    <section className={`card flex flex-col p-5 ${className}`} data-tour="schedule">
       <h2 className="card-head">
         <span className="text-point-orange-ink">
           <CalendarIcon />

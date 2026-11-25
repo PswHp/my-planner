@@ -143,7 +143,7 @@ function Sidebar({ user }: { user: User }) {
       </Link>
 
       {/* 중앙: 메뉴 */}
-      <nav className="flex flex-col gap-1 px-3 lg:px-4" aria-label="주 메뉴">
+      <nav className="flex flex-col gap-1 px-3 lg:px-4" aria-label="주 메뉴" data-tour="nav">
         {NAV.map((n) => (
           <NavLink
             key={n.to}
@@ -223,6 +223,7 @@ function MobileTabBar({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; menuOp
     <nav
       className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line bg-sidebar/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       aria-label="주 메뉴"
+      data-tour="nav"
     >
       {NAV.filter((n) => n.tab).map((n) => (
         <NavLink key={n.to} to={n.to} className={({ isActive }) => itemClass(isActive)}>

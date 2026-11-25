@@ -62,7 +62,7 @@ export function PullCord({ className = '' }: { className?: string }) {
   const spring = dragging ? 'none' : '520ms cubic-bezier(0.34, 1.8, 0.5, 1)'
 
   return (
-    <div className={`pointer-events-none absolute top-0 z-10 flex w-[30px] flex-col items-center ${className}`}>
+    <div className={`pointer-events-none absolute top-0 z-10 flex w-[30px] flex-col items-center ${className}`} data-tour="mode">
       {/* 천장 고정부 */}
       <span className="h-[3px] w-3 rounded-b-sm bg-line-strong" aria-hidden="true" />
       {/* 줄 */}
