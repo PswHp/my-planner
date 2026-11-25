@@ -26,6 +26,7 @@ export interface GuideStep {
   /** 강조할 요소의 data-tour 값 (없으면 화면 가운데 안내) */
   target?: string
   title: string
+  /** 안내 문구 — **이렇게** 감싼 부분은 강조해서 보여줌 */
   body: string
   /** 화면 가운데에 동물 친구를 크게 보여주는 단계 (첫 인사) */
   hero?: boolean
@@ -59,7 +60,7 @@ export const GUIDE_STEPS: GuideStep[] = [
   },
   {
     title: '준비 완료!',
-    body: '매일 처음 접속하면 코인과 액세서리 선물을 받을 수 있어요. 오늘도 좋은 하루 보내세요!',
+    body: '매일 처음 접속하면 **코인**과 **액세서리** 선물을 받을 수 있어요. 오늘도 좋은 하루 보내세요!',
   },
 ]
 
@@ -107,4 +108,12 @@ export function placeCard(box: Box | null, cardH: number, vw: number, vh: number
   const above = box.top - gap - cardH
   const top = below + cardH <= vh - margin ? below : above >= margin ? above : vh - cardH - margin
   return { top, left, width }
+}
+
+/** 안내 문구를 일반 글자 / 강조(**…**) 조각으로 나눔 */
+export function splitEmphasis(text: string): { text: string; strong: boolean }[] {
+  return text
+    .split(/\*\*(.+?)\*\*/)
+    .map((part, i) => ({ text: part, strong: i % 2 === 1 }))
+    .filter((p) => p.text)
 }

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { GUIDE_LAYOUT, GUIDE_STEPS, placeCard, spotlightBox, visibleSteps, type Box } from '../lib/guide'
+import { GUIDE_LAYOUT, GUIDE_STEPS, placeCard, splitEmphasis, spotlightBox, visibleSteps, type Box } from '../lib/guide'
 import { CAT, CLOUD, FLOWER, FLOWER_PINK, GRASS, HEART, PixelArt, PixelStrip } from './Pixel'
 
 const DIM = 'color-mix(in srgb, var(--color-scrim) 55%, transparent)'
@@ -124,7 +124,15 @@ export function Guide({ onClose }: { onClose: () => void }) {
           {step.title}
         </h2>
         <p id="guide-body" className="mt-1.5 text-sm leading-relaxed break-keep text-ink-muted">
-          {step.body}
+          {splitEmphasis(step.body).map((p, i) =>
+            p.strong ? (
+              <strong key={i} className="font-bold text-brand-ink">
+                {p.text}
+              </strong>
+            ) : (
+              p.text
+            ),
+          )}
         </p>
 
         <div className="mt-4 flex justify-center gap-1.5" aria-hidden="true">

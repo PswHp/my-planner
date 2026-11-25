@@ -3,7 +3,16 @@ import assert from 'node:assert/strict'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, test } from 'node:test'
-import { GUIDE_LAYOUT, GUIDE_STEPS, guideSeen, markGuideSeen, placeCard, spotlightBox, visibleSteps } from '../../src/lib/guide.ts'
+import {
+  GUIDE_LAYOUT,
+  GUIDE_STEPS,
+  guideSeen,
+  markGuideSeen,
+  placeCard,
+  splitEmphasis,
+  spotlightBox,
+  visibleSteps,
+} from '../../src/lib/guide.ts'
 
 function useStorage(storage: unknown) {
   Object.defineProperty(globalThis, 'localStorage', { value: storage, configurable: true, writable: true })
@@ -59,6 +68,35 @@ describe('안내 단계', () => {
       visibleSteps(GUIDE_STEPS, () => false).map((s) => s.target),
       [undefined, undefined],
     )
+  })
+})
+
+describe('문구 강조 (**…**)', () => {
+  test('강조 부분만 나눠서 표시', () => {
+    assert.deepEqual(splitEmphasis('매일 **코인**과 **액세서리** 선물'), [
+      { text: '매일 ', strong: false },
+      { text: '코인', strong: true },
+      { text: '과 ', strong: false },
+      { text: '액세서리', strong: true },
+      { text: ' 선물', strong: false },
+    ])
+    assert.deepEqual(splitEmphasis('강조 없음'), [{ text: '강조 없음', strong: false }])
+    assert.deepEqual(splitEmphasis('**처음**부터'), [
+      { text: '처음', strong: true },
+      { text: '부터', strong: false },
+    ])
+  })
+
+  test('마지막 안내에서 코인과 액세서리를 강조', () => {
+    const strong = splitEmphasis(GUIDE_STEPS[GUIDE_STEPS.length - 1].body).filter((p) => p.strong)
+    assert.deepEqual(
+      strong.map((p) => p.text),
+      ['코인', '액세서리'],
+    )
+  })
+
+  test('모든 문구의 별표 짝이 맞음 (화면에 ** 가 그대로 보이지 않게)', () => {
+    for (const s of GUIDE_STEPS) assert.ok(!splitEmphasis(s.body).some((p) => p.text.includes('*')), s.title)
   })
 })
 
